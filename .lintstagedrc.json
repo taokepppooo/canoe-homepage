@@ -1,0 +1,4 @@
+{
+  "*.{vue,js,ts,jsx,tsx}": "lerna run lint:fix",
+  "*.{*.vue,less,postcss,css,scss}": "lerna run lint:stylelint:fix"
+}
