@@ -2,7 +2,7 @@
 module.exports = {
   root: true,
   plugins: ['stylelint-order'],
-  extends: ['stylelint-config-standard', 'stylelint-config-prettier'],
+  extends: ['stylelint-config-standard'],
   customSyntax: 'postcss-html',
   rules: {
     'property-no-vendor-prefix': null,
@@ -75,7 +75,7 @@ module.exports = {
   overrides: [
     {
       files: ['*.vue', '**/*.vue', '*.html', '**/*.html'],
-      extends: ['stylelint-config-recommended'],
+      extends: ['stylelint-config-recommended-vue'],
       rules: {
         'keyframes-name-pattern': null,
         'selector-pseudo-class-no-unknown': [
