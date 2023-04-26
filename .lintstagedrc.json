@@ -1,4 +1,4 @@
 {
-  "*.{vue,js,ts,jsx,tsx}": "lerna run lint:fix",
-  "*.{*.vue,less,postcss,css,scss}": "lerna run lint:stylelint:fix"
+  "packages/main-app/**/*.{vue,js,ts,jsx,tsx}": "lerna run lint:fix --scope=main-app",
+  "packages/main-app/**/*.{*.vue,less,postcss,css,scss}": "lerna run lint:stylelint:fix --scope=main-app"
 }

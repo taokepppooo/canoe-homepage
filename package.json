@@ -6,9 +6,6 @@
   ],
   "scripts": {
     "build": "lerna run build",
-    "lint": "lerna run lint && eslint . --ext .js --max-warnings 0 && pretty-quick --check --branch dev",
-    "lint:fix": "lerna run lint:fix && eslint . --fix --ext .js --max-warnings 0  && pretty-quick --branch dev",
-    "lint:stylelint:fix": "lerna run lint:stylelint:fix",
     "commit": "git add . && cz-customizable",
     "prepare": "husky install"
   },
@@ -39,6 +36,10 @@
     "lerna": "^6.6.1",
     "lint-staged": "^13.2.1",
     "prettier": "^2.8.8",
-    "pretty-quick": "3.1.3"
+    "pretty-quick": "3.1.3",
+    "stylelint": "15.6.0",
+    "stylelint-config-recommended": "12.0.0",
+    "stylelint-config-standard": "33.0.0",
+    "stylelint-order": "6.0.3"
   }
 }
