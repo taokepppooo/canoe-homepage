@@ -13,3 +13,7 @@
 `lerna create 包名称`
 
 `lerna bootstrap`
+
+`lerna add stylelint-config-prettier-scss --scope=main-app`
+
+`lerna exec 'pnpm remove stylelint-config-prettier-scss' --scope=main-app`
