@@ -1,14 +1,32 @@
-/* eslint-env node */
-module.exports = {
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { defineConfig } = require('eslint-define-config')
+
+const baseExtends = [
+  'eslint:recommended',
+  'plugin:import/typescript',
+  'plugin:@typescript-eslint/recommended',
+  'prettier'
+]
+
+module.exports = defineConfig({
   root: true,
-  extends: ['eslint:recommended'],
-  plugins: ['prettier', 'import'],
+  env: {
+    browser: true,
+    es2021: true,
+    node: true
+  },
+  extends: baseExtends,
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module'
+    parser: '@typescript-eslint/parser',
+    sourceType: 'module',
+    // 允许解析JSX
+    ecmaFeatures: {
+      jsx: true
+    }
   },
+  plugins: ['@typescript-eslint', 'prettier', 'import'],
   rules: {
-    eqeqeq: 'error',
     'no-debugger': 'error',
     'no-console': ['warn', { allow: ['error'] }],
     'no-restricted-syntax': ['error', 'LabeledStatement', 'WithStatement'],
@@ -22,7 +40,6 @@ module.exports = {
     'object-shorthand': ['error', 'always', { ignoreConstructors: false, avoidQuotes: true }],
     'block-scoped-var': 'error',
     'no-constant-condition': ['error', { checkLoops: false }],
-
     'no-use-before-define': 'off',
 
     // prettier
@@ -30,29 +47,61 @@ module.exports = {
 
     // import
     'import/first': 'off',
-    'import/no-duplicates': 'error',
-    'import/order': [
-      'error',
-      {
-        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
-        pathGroups: [
+    'import/no-duplicates': 'error'
+  },
+  overrides: [
+    {
+      files: ['*.ts', '*.tsx', '*.vue'],
+      excludedFiles: 'node_modules',
+      rules: { 'no-undef': 'off' }
+    },
+    {
+      files: ['packages/main-app/**'],
+      // 指定如何解析语法。可以为空，但若不为空，只能配该值
+      parser: 'vue-eslint-parser',
+      extends: ['plugin:vue/vue3-recommended', ...baseExtends],
+      rules: {
+        // vue
+        'vue/no-v-html': 'off',
+        'vue/require-default-prop': 'off',
+        'vue/require-explicit-emits': 'off',
+        'vue/multi-word-component-names': 'off',
+        'vue/component-definition-name-casing': 'off',
+        'vue/custom-event-name-casing': 'off',
+
+        'import/order': [
+          'error',
           {
-            pattern: 'vue',
-            group: 'external',
-            position: 'before'
-          },
-          {
-            pattern: '@vue/**',
-            group: 'external',
-            position: 'before'
-          },
-          {
-            pattern: '@/**',
-            group: 'internal'
+            groups: [
+              'builtin',
+              'external',
+              'internal',
+              'parent',
+              'sibling',
+              'index',
+              'object',
+              'type'
+            ],
+            pathGroups: [
+              {
+                pattern: 'vue',
+                group: 'external',
+                position: 'before'
+              },
+              {
+                pattern: '@vue/**',
+                group: 'external',
+                position: 'before'
+              },
+              {
+                pattern: '@/**',
+                group: 'internal'
+              }
+            ],
+            pathGroupsExcludedImportTypes: ['type']
           }
-        ],
-        pathGroupsExcludedImportTypes: ['type']
+        ]
       }
-    ]
-  }
-}
+    }
+  ]
+})
