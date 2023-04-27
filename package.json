@@ -7,7 +7,7 @@
   "scripts": {
     "build": "lerna run build",
     "commit": "git add . && cz-customizable",
-    "commit:version": "lerna version && git add . && cz-customizable",
+    "commit:version": "lerna version",
     "publish": "lerna publish --no-private --conventional-commit",
     "prepare": "husky install"
   },
