@@ -5,7 +5,9 @@
   "command": {
     "version": {
       "allowBranch": "main",
-      "conventionalCommits": false
+      "conventionalCommits": true,
+      "message": "chore(release): update release notes and package versions",
+      "noCommitHooks": true
     }
   }
 }
