@@ -6,8 +6,6 @@ const locale = zhCn
 
 <template>
   <ElConfigProvider :locale="locale">
-    <BasicAppProvider>
-      <RouterView />
-    </BasicAppProvider>
+    <RouterView />
   </ElConfigProvider>
 </template>
