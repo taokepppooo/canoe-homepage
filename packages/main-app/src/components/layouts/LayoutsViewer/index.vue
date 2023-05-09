@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
-import '~/comp/layouts-viewer.less'
+import './src/layouts-viewer.less'
 
 const ns = useNamespace('layouts-viewer')
 </script>

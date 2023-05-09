@@ -27,8 +27,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "~/*": ["./src/assets/*"],
-      "~/comp/*": ["./src/assets/components/style/*"]
+      "~": ["./src/assets"],
+      "~comp": ["./src/assets/components/style"]
     }
   }
 }

@@ -1,0 +1,18 @@
+@ns: ~'@{namespace}-layouts-vertical-nav-list-item';
+
+.@{ns} {
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-nav-icon-bg);
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+    margin: 3px;
+
+    &--active {
+      background-color: var(--primary-nav-icon-active-bg);
+    }
+  }
+}

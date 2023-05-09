@@ -1,4 +1,4 @@
-export const defaultNamespace = 'canoe-main-app'
+export const defaultNamespace = 'cm'
 
 const _bem = (block: string, blockSuffix: string, element: string, modifier: string) => {
   const __namespace = useGetNamespace()
@@ -31,6 +31,8 @@ export const useNamespace = (block: string) => {
     blockSuffix && element ? _bem(block, blockSuffix, element, '') : ''
   const bm = (blockSuffix?: string, modifier?: string) =>
     blockSuffix && modifier ? _bem(block, blockSuffix, '', modifier) : ''
+  const em = (element?: string, modifier?: string) =>
+    element && modifier ? _bem(block, '', element, modifier) : ''
   const bem = (blockSuffix?: string, element?: string, modifier?: string) =>
     blockSuffix && element && modifier ? _bem(block, blockSuffix, element, modifier) : ''
 
@@ -39,6 +41,7 @@ export const useNamespace = (block: string) => {
     e,
     be,
     bm,
+    em,
     bem
   }
 }
