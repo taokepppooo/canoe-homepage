@@ -11,29 +11,44 @@ const ns = useNamespace('layouts-vertical-nav-list')
 const nav = ref<LayoutNav[]>([
   {
     _index: '0',
+    _active: false,
     toolContent: 'Right Center prompts info',
     icon: 'ep:close'
   },
   {
     _index: '1',
+    _active: false,
     toolContent: 'Right Center prompts info',
     icon: 'ep:close'
   },
   {
     _index: '2',
+    _active: false,
     toolContent: 'Right Center prompts info',
     icon: 'ep:close'
   },
   {
     _index: '3',
+    _active: false,
     toolContent: 'Right Center prompts info',
     icon: 'ep:close'
   }
 ])
 
-const handleTrigger = (activeItem: LayoutNav | undefined, targetActiveItem: LayoutNav) => {
-  console.log(activeItem)
-  console.log(targetActiveItem)
+const activeIndex = ref<string>('')
+const handleToActive = (activeItem: LayoutNav) => {
+  if (activeIndex.value) {
+    // TODO 需要将索引改成唯一值
+    nav.value[Number(activeIndex.value)]._active = false
+  }
+
+  activeIndex.value = activeItem._index
+}
+const handleActive = (index: string, active: boolean) => {
+  if (activeIndex.value) {
+    // TODO 需要将索引改成唯一值
+    nav.value[Number(index)]._active = active
+  }
 }
 </script>
 
@@ -42,7 +57,8 @@ const handleTrigger = (activeItem: LayoutNav | undefined, targetActiveItem: Layo
     <li v-for="(item, index) in nav" :key="index">
       <Item
         :item="item"
-        @clear-active="(activeItem: LayoutNav | undefined) => handleTrigger(activeItem, item)"
+        @to-active="(activeItem) => handleToActive(activeItem)"
+        @active="handleActive"
       ></Item>
     </li>
   </ul>
