@@ -101,7 +101,14 @@ module.exports = defineConfig({
             pathGroupsExcludedImportTypes: ['type']
           }
         ]
-      }
+      },
+      overrides: [
+        {
+          files: ['*.ts', '*.tsx', '*.vue'],
+          excludedFiles: 'node_modules',
+          rules: { 'no-undef': 'off' }
+        }
+      ]
     }
   ]
 })

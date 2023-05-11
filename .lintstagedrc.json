@@ -1,4 +1,4 @@
 {
-  "packages/main-app/**/*.{vue,js,ts,jsx,tsx}": "eslint --fix",
-  "packages/main-app/**/*.{*.vue,less,postcss,css,scss}": "stylelint --fix"
+  "packages/main-app/**/*.{vue,js,ts,jsx,tsx}": "eslint --fix --cache",
+  "packages/main-app/**/*.{*.vue,less,postcss,css,scss}": "stylelint --fix --cache"
 }

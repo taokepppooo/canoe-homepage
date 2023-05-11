@@ -2,17 +2,17 @@
   "name": "main-app",
   "version": "1.0.2",
   "author": "taokepppooo <1075626521@qq.com>",
-  "homepage": "https://github.com/taokepppooo/canoe-home-page#readme",
+  "homepage": "https://github.com/taokepppooo/canoe-homepage#readme",
   "license": "ISC",
   "publishConfig": {
     "registry": "https://registry.npm.taobao.org/"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/taokepppooo/canoe-home-page.git"
+    "url": "git+https://github.com/taokepppooo/canoe-homepage.git"
   },
   "bugs": {
-    "url": "https://github.com/taokepppooo/canoe-home-page/issues"
+    "url": "https://github.com/taokepppooo/canoe-homepage/issues"
   },
   "scripts": {
     "dev": "vite",
@@ -32,6 +32,7 @@
     "vue-router": "^4.1.6"
   },
   "devDependencies": {
+    "@iconify-json/ep": "^1.1.10",
     "@types/jsdom": "^21.1.0",
     "@types/node": "^18.14.2",
     "@vitejs/plugin-vue": "^4.0.0",
