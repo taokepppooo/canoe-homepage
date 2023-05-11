@@ -7,7 +7,7 @@
   "scripts": {
     "build": "lerna run build",
     "commit": "git add . && cz-customizable",
-    "version": "git checkout main && lerna version --conventional-commits",
+    "version": "git checkout main && git pull && lerna version --conventional-commits",
     "prepare": "husky install"
   },
   "config": {

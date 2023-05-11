@@ -3,7 +3,6 @@ import { useNamespace } from '@/hooks/useNamespace'
 import Item from './src/item.vue'
 import type { LayoutNav } from './src/types'
 
-import '~/theme/nav.less'
 import './src/layouts-vertical-nav-list.less'
 
 const ns = useNamespace('layouts-vertical-nav-list')
