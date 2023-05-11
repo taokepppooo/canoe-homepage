@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.2.0](https://github.com/taokepppooo/canoe-homepage/compare/main-app@1.1.0...main-app@1.2.0) (2023-05-11)
+
+### Features
+
+- 添加切换主题功能 ([5509205](https://github.com/taokepppooo/canoe-homepage/commit/5509205b8993fd8426915e0ddfc852af69a77174))
+
 # [1.1.0](https://github.com/taokepppooo/canoe-homepage/compare/main-app@1.0.2...main-app@1.1.0) (2023-05-11)
 
 ### Bug Fixes
