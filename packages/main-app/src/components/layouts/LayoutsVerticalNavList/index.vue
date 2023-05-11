@@ -13,42 +13,43 @@ const nav = ref<LayoutNav[]>([
     _index: '0',
     _active: false,
     toolContent: 'Right Center prompts info',
-    icon: 'ep:close'
+    icon: 'ion:cloud'
   },
   {
     _index: '1',
     _active: false,
     toolContent: 'Right Center prompts info',
-    icon: 'ep:close'
+    icon: 'ion:cloud'
   },
   {
     _index: '2',
     _active: false,
     toolContent: 'Right Center prompts info',
-    icon: 'ep:close'
+    icon: 'ion:cloud'
   },
   {
     _index: '3',
     _active: false,
     toolContent: 'Right Center prompts info',
-    icon: 'ep:close'
+    icon: 'ion:cloud'
   }
 ])
 
 const activeIndex = ref<string>('')
-const handleToActive = (activeItem: LayoutNav) => {
+const handleClickActive = (activeItem: LayoutNav) => {
+  // TODO: 需要将索引改成唯一值
+  nav.value[Number(activeItem._index)]._active = true
+
   if (activeIndex.value) {
-    // TODO 需要将索引改成唯一值
+    // TODO: 需要将索引改成唯一值
     nav.value[Number(activeIndex.value)]._active = false
   }
 
   activeIndex.value = activeItem._index
 }
-const handleActive = (index: string, active: boolean) => {
-  if (activeIndex.value) {
-    // TODO 需要将索引改成唯一值
-    nav.value[Number(index)]._active = active
-  }
+const handleHoverActive = (index: string, active: boolean) => {
+  // TODO: 需要将索引改成唯一值
+  nav.value[Number(index)]._active = active
 }
 </script>
 
@@ -57,8 +58,8 @@ const handleActive = (index: string, active: boolean) => {
     <li v-for="(item, index) in nav" :key="index">
       <Item
         :item="item"
-        @to-active="(activeItem) => handleToActive(activeItem)"
-        @active="handleActive"
+        @click-active="(activeItem) => handleClickActive(activeItem)"
+        @hover-active="handleHoverActive"
       ></Item>
     </li>
   </ul>

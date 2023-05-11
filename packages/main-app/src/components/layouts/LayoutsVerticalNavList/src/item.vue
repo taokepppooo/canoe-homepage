@@ -15,30 +15,29 @@ const { item } = toRefs(props)
 const activeClass = computed(() => (item.value._active ? ns.em('icon', 'active') : null))
 const trigger = ref<Trigger>()
 const emit = defineEmits<{
-  (e: 'toActive', item: LayoutNav): void
-  (e: 'active', index: string, active: boolean): void
+  (e: 'click-active', item: LayoutNav): void
+  (e: 'hover-active', index: string, active: boolean): void
 }>()
 
 const handleClick = () => {
   if (trigger.value === 'hover') {
     trigger.value = 'select'
 
-    emit('toActive', item.value)
-    emit('active', item.value._index, true)
+    emit('click-active', item.value)
   }
 }
 const handleMouseEnter = () => {
   if (!item.value._active) {
     trigger.value = 'hover'
 
-    emit('active', item.value._index, true)
+    emit('hover-active', item.value._index, true)
   }
 }
 const handleMouseLeave = () => {
   if (trigger.value === 'hover') {
     trigger.value = 'hover-out'
 
-    emit('active', item.value._index, false)
+    emit('hover-active', item.value._index, false)
   }
 }
 </script>
@@ -47,7 +46,7 @@ const handleMouseLeave = () => {
   <div @click="handleClick" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <ElTooltip :content="item?.toolContent" placement="right">
       <div ref="iconRef" :class="[ns.e('icon'), activeClass]">
-        <Icon :icon="item.icon" :size="16"></Icon>
+        <Icon :icon="item.icon" :size="15"></Icon>
       </div>
     </ElTooltip>
   </div>

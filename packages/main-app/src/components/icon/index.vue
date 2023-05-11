@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useNamespace } from '@/hooks/useNamespace'
-import { iconProps } from './src/props'
 
 const ns = useNamespace('layouts-vertical-nav-list')
 
-const props = defineProps(iconProps)
+const props = defineProps<{
+  icon: string
+  size: number | string
+}>()
 
 const { icon, size } = toRefs(props)
 </script>
 
 <template>
-  <IconifyIcon v-if="icon" :class="ns.b()" :icon="icon" :height="size" :width="size" />
+  <IconifyIcon :class="ns.b()" :icon="icon" :height="size" :width="size" />
 </template>
