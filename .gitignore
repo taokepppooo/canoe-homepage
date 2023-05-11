@@ -2,3 +2,6 @@ node_modules/
 
 .history
 lerna-debug.log
+
+.eslintcache
+.stylelintcache

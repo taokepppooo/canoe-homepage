@@ -5,7 +5,8 @@ import App from './App.vue'
 import router from './router'
 
 import 'normalize.css'
-import './assets/global/normal.less'
+import '~/global/normal.less'
+import '~/theme/index.less'
 
 const app = createApp(App)
 
