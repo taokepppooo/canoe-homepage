@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.3.0](https://github.com/taokepppooo/canoe-homepage/compare/main-app@1.2.0...main-app@1.3.0) (2023-05-17)
+
+### Features
+
+- **main-app:** 左侧导航栏提供切换动画效果 ([b213975](https://github.com/taokepppooo/canoe-homepage/commit/b2139756ed0eff02914c46b8bc93d99f209aebe8))
+
 # [1.2.0](https://github.com/taokepppooo/canoe-homepage/compare/main-app@1.1.0...main-app@1.2.0) (2023-05-11)
 
 ### Features
