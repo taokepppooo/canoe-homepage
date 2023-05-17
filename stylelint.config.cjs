@@ -5,8 +5,9 @@ module.exports = {
   extends: ['stylelint-config-standard'],
   customSyntax: 'postcss-html',
   rules: {
+    'selector-class-pattern': '^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?$',
+    'value-keyword-case': null,
     'function-no-unknown': null,
-    'selector-class-pattern': null,
     'selector-pseudo-class-no-unknown': [
       true,
       {
@@ -67,10 +68,10 @@ module.exports = {
       { severity: 'warning' }
     ]
   },
-  ignoreFiles: ['**/*.js', '**/*.jsx', '**/*.tsx', '**/*.ts'],
+  ignoreFiles: ['*.js', '*.jsx', '*.tsx', '*.ts'],
   overrides: [
     {
-      files: ['*.vue', '**/*.vue', '*.html', '**/*.html'],
+      files: ['*.vue', '*.html'],
       extends: ['stylelint-config-recommended-vue'],
       rules: {
         'keyframes-name-pattern': null,
@@ -89,7 +90,7 @@ module.exports = {
       }
     },
     {
-      files: ['*.less', '**/*.less'],
+      files: ['*.less'],
       customSyntax: 'postcss-less',
       extends: ['stylelint-config-standard', 'stylelint-config-recommended-vue']
     }
