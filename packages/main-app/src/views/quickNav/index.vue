@@ -16,7 +16,7 @@ const ns = useNamespace('layouts-quick-nav')
 .@{ns} {
   position: absolute;
   bottom: 0;
-  width: 100vw;
+  width: 100%;
 
   &-operate {
     width: 80%;

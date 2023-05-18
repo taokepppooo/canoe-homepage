@@ -26,7 +26,8 @@ export const useGetNamespace = () => {
 
 export const useNamespace = (block: string) => {
   const b = (blockSuffix = '') => _bem(block, blockSuffix, '', '')
-  const e = (element = '') => _bem(block, '', element, '')
+  const e = (element?: string) => (element ? _bem(block, '', element, '') : '')
+  const m = (modifier?: string) => (modifier ? _bem(block, '', '', modifier) : '')
   const be = (blockSuffix?: string, element?: string) =>
     blockSuffix && element ? _bem(block, blockSuffix, element, '') : ''
   const bm = (blockSuffix?: string, modifier?: string) =>
@@ -39,6 +40,7 @@ export const useNamespace = (block: string) => {
   return {
     b,
     e,
+    m,
     be,
     bm,
     em,
