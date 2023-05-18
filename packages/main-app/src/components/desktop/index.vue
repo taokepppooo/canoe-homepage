@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
 
-const ns = useNamespace('layouts-viewer')
+const ns = useNamespace('desktop')
 </script>
 
 <template>
   <div :class="ns.b()">
-    <SearchEngine />
-    <Desktop />
+    <div></div>
+    <div></div>
   </div>
 </template>
 
 <style lang="less">
-@ns: ~'@{namespace}-layouts-viewer';
+@ns: ~'@{namespace}-desktop';
 
 .@{ns} {
   width: 100vw;
