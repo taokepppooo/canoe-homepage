@@ -1,20 +1,17 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
 
-const ns = useNamespace('desktop')
+const ns = useNamespace('search-engine')
 </script>
 
 <template>
-  <div :class="ns.b()">
-    <div></div>
-    <div></div>
-  </div>
+  <div :class="ns.b()"></div>
 </template>
 
 <style lang="less">
-@ns: ~'@{namespace}-desktop';
+@ns: ~'@{namespace}-search-engine';
 
 .@{ns} {
-  width: 100vw;
+  height: 200px;
 }
 </style>

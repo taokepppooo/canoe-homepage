@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import SearchEngine from '@/views/searchEngine/index.vue'
+import Desktop from '@/views/desktop/index.vue'
+import QuickNav from '@/views/quickNav/index.vue'
 import { useNamespace } from '@/hooks/useNamespace'
 
 const ns = useNamespace('layouts-viewer')
@@ -8,13 +11,10 @@ const ns = useNamespace('layouts-viewer')
   <div :class="ns.b()">
     <SearchEngine />
     <Desktop />
+    <QuickNav />
   </div>
 </template>
 
 <style lang="less">
 @ns: ~'@{namespace}-layouts-viewer';
-
-.@{ns} {
-  width: 100vw;
-}
 </style>
