@@ -1,9 +1,20 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
+import { useSortable } from '@/hooks/useSortable'
 import { useDesktop } from '@/hooks/desktop/useDesktop'
 
 const ns = useNamespace('desktop')
 const { appCSSConstant, appSize } = useDesktop()
+
+const appsRef = ref()
+
+nextTick(() => {
+  const element = appsRef.value
+  useSortable(element, {
+    sort: true,
+    forceFallback: true
+  })
+})
 
 const apps = ref([
   {
@@ -175,7 +186,7 @@ const apps = ref([
 
 <template>
   <div :class="ns.b()">
-    <div :class="ns.e('apps')">
+    <div ref="appsRef" :class="ns.e('apps')">
       <DesktopApp
         v-for="(app, index) in apps"
         :key="index"

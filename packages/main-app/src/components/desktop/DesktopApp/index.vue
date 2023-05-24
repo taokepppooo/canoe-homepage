@@ -22,8 +22,6 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
 @ns: ~'@{namespace}-desktop-app';
 
 .@{ns} {
-  width: v-bind('size.width');
-  height: v-bind('size.height');
   grid-row: span v-bind(gapRows);
   grid-column: span v-bind(gapColumns);
   position: relative;
