@@ -4,7 +4,7 @@ export const useDesktop = () => {
   const appCSSConstant = ref<AppCSSConstant>({
     borderRadius: '10px',
     gridGapX: '45px',
-    gridGapY: '25px'
+    gridGapY: '45px'
   })
 
   const appSize = ref<AppSize>({

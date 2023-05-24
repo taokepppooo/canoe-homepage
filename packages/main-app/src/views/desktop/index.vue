@@ -7,8 +7,8 @@ const { appCSSConstant, appSize } = useDesktop()
 
 const apps = ref([
   {
-    gapRows: 1,
-    gapColumns: 1
+    gapRows: 2,
+    gapColumns: 4
   },
   {
     gapRows: 1,
@@ -107,8 +107,8 @@ const apps = ref([
     gapColumns: 1
   },
   {
-    gapRows: 1,
-    gapColumns: 1
+    gapRows: 2,
+    gapColumns: 4
   },
   {
     gapRows: 1,
@@ -135,8 +135,8 @@ const apps = ref([
     gapColumns: 1
   },
   {
-    gapRows: 1,
-    gapColumns: 1
+    gapRows: 2,
+    gapColumns: 2
   },
   {
     gapRows: 1,
@@ -195,8 +195,8 @@ const apps = ref([
 
   &__apps {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(v-bind('appSize.width'), 1fr));
-    grid-template-rows: repeat(auto-fill, minmax(v-bind('appSize.height'), 1fr));
+    grid-template-columns: repeat(auto-fill, v-bind('appSize.width'));
+    grid-template-rows: repeat(auto-fill, v-bind('appSize.height'));
     grid-gap: v-bind('appCSSConstant.gridGapY') v-bind('appCSSConstant.gridGapX');
     justify-content: center;
     user-select: none;
