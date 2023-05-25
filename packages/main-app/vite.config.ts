@@ -17,6 +17,9 @@ export default defineConfig({
         modifyVars: generateModifyVars(),
         javascriptEnabled: true
       }
+    },
+    postcss: {
+      plugins: [require('autoprefixer')]
     }
   },
   plugins: [
