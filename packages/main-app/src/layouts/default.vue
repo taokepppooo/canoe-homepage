@@ -15,7 +15,7 @@ const ns = useNamespace('layouts')
 
 .@{ns} {
   height: 100vh;
-  background: url('https://cdn.dribbble.com/userupload/6903601/file/original-34da2d73df7ef84fcf35be4f456b0d87.png?compress=1&resize=1600x1280');
+  background: url('https://www4.bing.com//th?id=OHR.SaksunFaroe_ZH-CN7150180006_UHD.jpg');
   background-size: cover;
 }
 </style>

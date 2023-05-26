@@ -1,7 +1,7 @@
-import { useDesktop } from '@/hooks/desktop/useDesktop'
+import { useDesktopGlobal } from '@/hooks/useGlobal'
 import type { AppSize } from '@/types/desktop'
 
-const { appCSSConstant, appSize } = useDesktop()
+const { appCSSConstant, appSize } = useDesktopGlobal()
 
 export const useDesktopApp = (gapRows: number | unknown, gapColumns: number | unknown) => {
   const _gapRows = ref((gapRows as number) || 0)

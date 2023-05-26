@@ -1,19 +1,29 @@
-import type { AppCSSConstant, AppSize } from '@/types/desktop'
+import { multiply } from 'lodash-es'
+import { calcElementWidth } from '@/utils/dom'
+import { useLayoutStore } from '@/stores/layout'
 
-export const useDesktop = () => {
-  const appCSSConstant = ref<AppCSSConstant>({
-    borderRadius: '10px',
-    gridGapX: '45px',
-    gridGapY: '35px'
-  })
+export const useDesktop = (
+  desktopHeight: Ref<string>,
+  desktopRef: Ref,
+  gridGapX: string,
+  width: string,
+  gridGapY: string,
+  height: string,
+  apps: Ref<[{ [key: string]: object }]>
+) => {
+  const layoutStore = useLayoutStore()
 
-  const appSize = ref<AppSize>({
-    width: '60px',
-    height: '60px'
-  })
+  const desktopWidth = calcElementWidth(desktopRef.value)
+  const calcHeight = window.innerHeight - layoutStore.noDesktopLayoutHeight
+  desktopHeight.value = `calc(${calcHeight}px)`
 
-  return {
-    appCSSConstant,
-    appSize
-  }
+  const __gridGapX = parseInt(gridGapX)
+  const __width = parseInt(width)
+  const horizontalAppTotal = Math.floor((desktopWidth + __gridGapX) / (__gridGapX + __width))
+
+  const __gridGapY = parseInt(gridGapY)
+  const __height = parseInt(height)
+  const verticalAppTotal = Math.floor((calcHeight + __gridGapY) / (__gridGapY + __height))
+
+  apps.value.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.value.length)
 }

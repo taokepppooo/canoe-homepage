@@ -29,11 +29,12 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
   &__title {
     .text-ellipsis();
 
-    width: calc(v-bind('size.width') + 20px);
     position: absolute;
     left: -10px;
+    width: calc(v-bind('size.width') + 20px);
+    filter: drop-shadow(1px 0 1px rgba(0 0 0 / 70%));
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     margin: 8px 0;
     text-align: center;
   }

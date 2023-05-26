@@ -17,6 +17,9 @@ export default defineConfig({
         modifyVars: generateModifyVars(),
         javascriptEnabled: true
       }
+    },
+    postcss: {
+      plugins: [require('autoprefixer')]
     }
   },
   plugins: [
@@ -24,7 +27,7 @@ export default defineConfig({
     vueJsx(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
-      imports: ['vue', 'vue-router', '@vueuse/core']
+      imports: ['vue', 'vue-router', '@vueuse/core', 'pinia']
     }),
     Components({
       resolvers: [IconsResolver(), ElementPlusResolver()]

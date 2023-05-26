@@ -1,199 +1,45 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
 import { useSortable } from '@/hooks/useSortable'
+import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktop } from '@/hooks/desktop/useDesktop'
 
 const ns = useNamespace('desktop')
-const { appCSSConstant, appSize } = useDesktop()
+const { appCSSConstant, appSize } = useDesktopGlobal()
 
 const appsRef = ref()
+const desktopHeight = ref('auto')
+
+// TODO: 替换数据
+const apps = ref<[{ [key: string]: object }]>([{}])
+const desktopRef = ref()
+
+for (let i = 0; i < 100; i++) {
+  apps.value.push({})
+}
 
 nextTick(() => {
   const element = appsRef.value
-  useSortable(element, {
-    sort: true,
-    forceFallback: true
-  })
-})
+  useSortable(element)
 
-const apps = ref([
-  {
-    gapRows: 2,
-    gapColumns: 4
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 2,
-    gapColumns: 4
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 2,
-    gapColumns: 2
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  },
-  {
-    gapRows: 1,
-    gapColumns: 1
-  }
-])
+  useDesktop(
+    desktopHeight,
+    desktopRef,
+    appCSSConstant.value.gridGapX,
+    appSize.value.width,
+    appCSSConstant.value.gridGapY,
+    appSize.value.height,
+    apps
+  )
+})
 </script>
 
 <template>
-  <div :class="ns.b()">
+  <div ref="desktopRef" :class="ns.b()">
     <div ref="appsRef" :class="ns.e('apps')">
-      <DesktopApp
-        v-for="(app, index) in apps"
-        :key="index"
-        :gap-rows="app.gapRows"
-        :gap-columns="app.gapColumns"
-      />
+      <DesktopApp v-for="(app, index) in apps" :key="index" :gap-rows="1" :gap-columns="1" />
     </div>
+    <div style="height: 20px"></div>
   </div>
 </template>
 
@@ -202,6 +48,7 @@ const apps = ref([
 
 .@{ns} {
   width: 70vw;
+  height: v-bind('desktopHeight');
   margin: 0 auto;
 
   &__apps {
