@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
-import { useDesktop } from '@/hooks/desktop/useDesktop'
+import { useDesktopGlobal } from '@/hooks/useGlobal'
 
 const props = defineProps<{
   width: string
@@ -10,7 +10,7 @@ const props = defineProps<{
 const { width, height } = toRefs(props)
 
 const ns = useNamespace('desktop-app-icon')
-const { appCSSConstant } = useDesktop()
+const { appCSSConstant } = useDesktopGlobal()
 </script>
 
 <template>
