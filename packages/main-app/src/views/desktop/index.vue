@@ -22,12 +22,28 @@ nextTick(() => {
   const element = appsRef.value
 
   useSortable(element, {
-    swap: true, // Enable swap plugin
-    swapClass: 'highlight', // The class applied to the hovered swap item
+    dataIdAttr: 'data-id',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
       console.log(evt)
-      console.log(evt.originalEvent)
+      const originalEvent = evt.originalEvent
+      const clientX = originalEvent.clientX
+      const clientY = originalEvent.clientY
+      const related = evt.related
+      const relatedRect = evt.relatedRect
+      // 向右
+      if (clientX > related.offsetLeft && clientX < relatedRect.right - 10) {
+        console.log('x-right-inner')
+        return false
+      }
+      console.log(clientX)
+      console.log(related.offsetLeft)
+      // 向左
+      if (clientX < related.offsetLeft && clientX > relatedRect.left - 10) {
+        console.log('x-left-inner')
+        return false
+      }
+      console.log('outer')
     }
   })
 
@@ -53,10 +69,6 @@ nextTick(() => {
 
 <style lang="less">
 @ns: ~'@{namespace}-desktop';
-
-.highlight {
-  transform: scale(1.1);
-}
 
 .@{ns} {
   width: 70vw;

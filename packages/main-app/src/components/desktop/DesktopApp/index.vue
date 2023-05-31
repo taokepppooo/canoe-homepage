@@ -26,6 +26,13 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
   grid-column: span v-bind(gapColumns);
   position: relative;
 
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    z-index: 1;
+  }
+
   &__title {
     .text-ellipsis();
 
