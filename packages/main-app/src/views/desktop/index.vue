@@ -21,8 +21,8 @@ for (let i = 0; i < 100; i++) {
 nextTick(() => {
   const element = appsRef.value
 
+  const ENABLE_DRAG_DISTANCE = 5
   useSortable(element, {
-    dataIdAttr: 'data-id',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
       console.log(evt)
@@ -31,18 +31,23 @@ nextTick(() => {
       const clientY = originalEvent.clientY
       const related = evt.related
       const relatedRect = evt.relatedRect
+      const draggedRect = evt.draggedRect
       // 向右
-      if (clientX > related.offsetLeft && clientX < relatedRect.right - 10) {
+      if (clientX > draggedRect.right && clientX < relatedRect.right - ENABLE_DRAG_DISTANCE) {
         console.log('x-right-inner')
         return false
       }
       console.log(clientX)
       console.log(related.offsetLeft)
       // 向左
-      if (clientX < related.offsetLeft && clientX > relatedRect.left - 10) {
+      if (
+        clientX < draggedRect.left + parseInt(appSize.value.width) &&
+        clientX > relatedRect.left + ENABLE_DRAG_DISTANCE
+      ) {
         console.log('x-left-inner')
         return false
       }
+
       console.log('outer')
     }
   })
