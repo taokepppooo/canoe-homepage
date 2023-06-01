@@ -10,11 +10,14 @@ const appsRef = ref()
 const desktopHeight = ref('auto')
 
 // TODO: 替换数据
-const apps = ref<[{ [key: string]: object }]>([{}])
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const apps = ref<[{ [key: string]: any }]>([{}])
 const desktopRef = ref()
 
 for (let i = 0; i < 100; i++) {
-  apps.value.push({})
+  apps.value.push({
+    id: `${i}`
+  })
 }
 
 nextTick(() => {

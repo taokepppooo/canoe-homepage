@@ -46,9 +46,21 @@ export const useDesktopSortable = (
 
   useSortable(element, {
     handle: `.${ns.b('app')}-wrapper`,
-    dataIdAttr: 'data-id',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
+      const {
+        originalEvent: { clientX, clientY },
+        relatedRect
+      } = evt
+      if (
+        clientX > relatedRect.left + ContainerWidthToWidthDistance &&
+        clientX < relatedRect.right - ContainerWidthToWidthDistance &&
+        clientY > relatedRect.top + ContainerHeightToHeightDistance &&
+        clientY < relatedRect.bottom - ContainerHeightToHeightDistance
+      ) {
+        console.log(evt)
+      }
+
       return sort(
         appCSSConstant,
         appSize,
