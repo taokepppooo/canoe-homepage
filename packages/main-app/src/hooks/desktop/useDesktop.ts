@@ -1,14 +1,14 @@
-import { multiply } from 'lodash-es'
+import { multiply, divide } from 'lodash-es'
 import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
+import { useSortable } from '@/hooks/useSortable'
+import type { AppCSSConstant, AppSize } from '@/types/desktop'
 
 export const useDesktop = (
   desktopHeight: Ref<string>,
   desktopRef: Ref,
-  gridGapX: string,
-  width: string,
-  gridGapY: string,
-  height: string,
+  appCSSConstant: Ref<AppCSSConstant>,
+  appSize: Ref<AppSize>,
   apps: Ref<[{ [key: string]: object }]>
 ) => {
   const layoutStore = useLayoutStore()
@@ -17,13 +17,104 @@ export const useDesktop = (
   const calcHeight = window.innerHeight - layoutStore.noDesktopLayoutHeight
   desktopHeight.value = `calc(${calcHeight}px)`
 
-  const __gridGapX = parseInt(gridGapX)
-  const __width = parseInt(width)
+  const __gridGapX = parseInt(appCSSConstant.value.gridGapX)
+  const __width = parseInt(appSize.value.width)
   const horizontalAppTotal = Math.floor((desktopWidth + __gridGapX) / (__gridGapX + __width))
 
-  const __gridGapY = parseInt(gridGapY)
-  const __height = parseInt(height)
+  const __gridGapY = parseInt(appCSSConstant.value.gridGapY)
+  const __height = parseInt(appSize.value.height)
   const verticalAppTotal = Math.floor((calcHeight + __gridGapY) / (__gridGapY + __height))
 
   apps.value.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.value.length)
+}
+
+export const useDesktopSortable = (
+  element: HTMLElement,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ns: any,
+  appCSSConstant: Ref<AppCSSConstant>,
+  appSize: Ref<AppSize>
+) => {
+  const ContainerWidthToWidthDistance = divide(
+    parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
+    2
+  )
+  const ContainerHeightToHeightDistance = divide(
+    parseInt(appSize.value.containerHeight) - parseInt(appSize.value.height),
+    2
+  )
+
+  useSortable(element, {
+    handle: `.${ns.b('app')}-wrapper`,
+    dataIdAttr: 'data-id',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onMove: (evt: any) => {
+      return sort(
+        appCSSConstant,
+        appSize,
+        ContainerWidthToWidthDistance,
+        ContainerHeightToHeightDistance,
+        evt
+      )
+    }
+  })
+}
+
+const sort = (
+  appCSSConstant: Ref<AppCSSConstant>,
+  appSize: Ref<AppSize>,
+  ContainerWidthToWidthDistance: number,
+  ContainerHeightToHeightDistance: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  evt: any
+) => {
+  const {
+    originalEvent: { clientX, clientY },
+    relatedRect,
+    draggedRect
+  } = evt
+  const gridGapY = parseInt(appCSSConstant.value.gridGapY)
+  const containerWidth = parseInt(appSize.value.containerWidth)
+
+  const yRelatedScope =
+    clientY > relatedRect.top + ContainerHeightToHeightDistance &&
+    clientY < relatedRect.bottom - ContainerHeightToHeightDistance
+
+  const isYCrossing =
+    clientY > draggedRect.bottom + gridGapY + ContainerHeightToHeightDistance ||
+    clientY < draggedRect.top + gridGapY + ContainerHeightToHeightDistance
+
+  const isSameColumn = relatedRect.left === draggedRect.left
+
+  const isLeftOfDragged = clientX < draggedRect.left + ContainerWidthToWidthDistance
+  const isRightOfDragged = clientX > draggedRect.right - ContainerWidthToWidthDistance
+
+  const isInsideHorizontalScopeRight =
+    clientX > relatedRect.right - ContainerWidthToWidthDistance && yRelatedScope
+  const isInsideHorizontalScopeLeft =
+    clientX < relatedRect.left + ContainerWidthToWidthDistance && yRelatedScope
+
+  const isRightMove = clientX > draggedRect.right
+  const isLeftMove = clientX < draggedRect.left + containerWidth
+
+  if (isYCrossing) {
+    if (isSameColumn) {
+      return isLeftOfDragged || isRightOfDragged
+    } else {
+      if (isRightMove && isInsideHorizontalScopeRight) {
+        return true
+      }
+      if (isLeftMove && isInsideHorizontalScopeLeft) {
+        return true
+      }
+    }
+  } else {
+    if (isRightMove && isInsideHorizontalScopeRight) {
+      return true
+    }
+    if (isLeftMove && isInsideHorizontalScopeLeft) {
+      return true
+    }
+  }
+  return false
 }

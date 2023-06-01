@@ -1,6 +1,6 @@
 export const defaultNamespace = 'cm'
 
-const _bem = (block: string, blockSuffix: string, element: string, modifier: string) => {
+const _bem = (block: string, blockSuffix: string, element: string, modifier: string): string => {
   const __namespace = useGetNamespace()
 
   let __cls = `${__namespace}-${block}`

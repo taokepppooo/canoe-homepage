@@ -12,8 +12,10 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
 
 <template>
   <div :class="ns.b()">
-    <DesktopAppIcon :width="size.width" :height="size.height" v-bind="attrs"></DesktopAppIcon>
-    <p :class="ns.e('title')">iTab新手引导22222222222</p>
+    <div :class="ns.b('wrapper')">
+      <DesktopAppIcon :width="size.width" :height="size.height" v-bind="attrs"></DesktopAppIcon>
+      <p :class="ns.e('title')">iTab新手引导22222222222</p>
+    </div>
   </div>
 </template>
 
@@ -24,7 +26,18 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
 .@{ns} {
   grid-row: span v-bind(gapRows);
   grid-column: span v-bind(gapColumns);
+  width: v-bind('size.containerWidth');
+  height: v-bind('size.containerHeight');
   position: relative;
+
+  &-wrapper {
+    width: v-bind('size.width');
+    height: v-bind('size.height');
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 
   &__title {
     .text-ellipsis();

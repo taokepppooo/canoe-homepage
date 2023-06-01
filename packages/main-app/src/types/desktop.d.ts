@@ -5,6 +5,8 @@ export interface AppCSSConstant {
 }
 
 export interface AppSize {
+  containerWidth: string
+  containerHeight: string
   width: string
   height: string
 }

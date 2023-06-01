@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
-import { useSortable } from '@/hooks/useSortable'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import { useDesktop } from '@/hooks/desktop/useDesktop'
+import { useDesktop, useDesktopSortable } from '@/hooks/desktop/useDesktop'
 
 const ns = useNamespace('desktop')
 const { appCSSConstant, appSize } = useDesktopGlobal()
@@ -21,46 +20,9 @@ for (let i = 0; i < 100; i++) {
 nextTick(() => {
   const element = appsRef.value
 
-  const ENABLE_DRAG_DISTANCE = 5
-  useSortable(element, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onMove: (evt: any) => {
-      console.log(evt)
-      const originalEvent = evt.originalEvent
-      const clientX = originalEvent.clientX
-      const clientY = originalEvent.clientY
-      const related = evt.related
-      const relatedRect = evt.relatedRect
-      const draggedRect = evt.draggedRect
-      // 向右
-      if (clientX > draggedRect.right && clientX < relatedRect.right - ENABLE_DRAG_DISTANCE) {
-        console.log('x-right-inner')
-        return false
-      }
-      console.log(clientX)
-      console.log(related.offsetLeft)
-      // 向左
-      if (
-        clientX < draggedRect.left + parseInt(appSize.value.width) &&
-        clientX > relatedRect.left + ENABLE_DRAG_DISTANCE
-      ) {
-        console.log('x-left-inner')
-        return false
-      }
+  useDesktopSortable(element, ns, appCSSConstant, appSize)
 
-      console.log('outer')
-    }
-  })
-
-  useDesktop(
-    desktopHeight,
-    desktopRef,
-    appCSSConstant.value.gridGapX,
-    appSize.value.width,
-    appCSSConstant.value.gridGapY,
-    appSize.value.height,
-    apps
-  )
+  useDesktop(desktopHeight, desktopRef, appCSSConstant, appSize, apps)
 })
 </script>
 
@@ -82,8 +44,8 @@ nextTick(() => {
 
   &__apps {
     display: grid;
-    grid-template-columns: repeat(auto-fill, v-bind('appSize.width'));
-    grid-template-rows: repeat(auto-fill, v-bind('appSize.height'));
+    grid-template-columns: repeat(auto-fill, v-bind('appSize.containerWidth'));
+    grid-template-rows: repeat(auto-fill, v-bind('appSize.containerHeight'));
     grid-gap: v-bind('appCSSConstant.gridGapY') v-bind('appCSSConstant.gridGapX');
     justify-content: center;
     user-select: none;
