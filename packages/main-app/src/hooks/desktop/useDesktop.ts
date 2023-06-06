@@ -58,16 +58,27 @@ export const useDesktopSortable = (
         clientY > relatedRect.top + ContainerHeightToHeightDistance &&
         clientY < relatedRect.bottom - ContainerHeightToHeightDistance
       ) {
-        console.log(evt)
-      }
+        dragHover(() => {
+          const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+          console.log('Moved over index:', relatedIndex)
+        })
 
-      return sort(
-        appCSSConstant,
-        appSize,
-        ContainerWidthToWidthDistance,
-        ContainerHeightToHeightDistance,
-        evt
-      )
+        return false
+      } else {
+        // 排序时会执行定时器中的函数，所以需要在这里清除定时器
+        dragEnd()
+
+        return sort(
+          appCSSConstant,
+          appSize,
+          ContainerWidthToWidthDistance,
+          ContainerHeightToHeightDistance,
+          evt
+        )
+      }
+    },
+    onEnd: () => {
+      dragEnd()
     }
   })
 }
@@ -92,7 +103,7 @@ const sort = (
     clientY > relatedRect.top + ContainerHeightToHeightDistance &&
     clientY < relatedRect.bottom - ContainerHeightToHeightDistance
 
-  const isYCrossing =
+  const isVerticalCrossing =
     clientY > draggedRect.bottom + gridGapY + ContainerHeightToHeightDistance ||
     clientY < draggedRect.top + gridGapY + ContainerHeightToHeightDistance
 
@@ -100,6 +111,8 @@ const sort = (
 
   const isLeftOfDragged = clientX < draggedRect.left + ContainerWidthToWidthDistance
   const isRightOfDragged = clientX > draggedRect.right - ContainerWidthToWidthDistance
+  const isTopOfRelatedRect = clientY < relatedRect.top + ContainerHeightToHeightDistance
+  const isBottomRelatedRect = clientY > relatedRect.bottom - ContainerHeightToHeightDistance
 
   const isInsideHorizontalScopeRight =
     clientX > relatedRect.right - ContainerWidthToWidthDistance && yRelatedScope
@@ -109,24 +122,50 @@ const sort = (
   const isRightMove = clientX > draggedRect.right
   const isLeftMove = clientX < draggedRect.left + containerWidth
 
-  if (isYCrossing) {
-    if (isSameColumn) {
-      return isLeftOfDragged || isRightOfDragged
-    } else {
-      if (isRightMove && isInsideHorizontalScopeRight) {
-        return true
-      }
-      if (isLeftMove && isInsideHorizontalScopeLeft) {
-        return true
-      }
-    }
-  } else {
+  const horizontalMove = () => {
     if (isRightMove && isInsideHorizontalScopeRight) {
       return true
     }
     if (isLeftMove && isInsideHorizontalScopeLeft) {
       return true
     }
+
+    return false
   }
-  return false
+
+  if (isVerticalCrossing) {
+    if (isSameColumn) {
+      const isVerticalTopMove =
+        clientY < draggedRect.top &&
+        clientX > relatedRect.left + ContainerWidthToWidthDistance &&
+        clientX < relatedRect.right - ContainerWidthToWidthDistance
+      return isVerticalTopMove
+        ? isTopOfRelatedRect
+        : isBottomRelatedRect || isLeftOfDragged || isRightOfDragged
+    } else {
+      return horizontalMove()
+    }
+  } else {
+    return horizontalMove()
+  }
+}
+
+let moveTime: NodeJS.Timeout
+let lastMoveTime: number
+const MERGE_TIME = 1000
+const dragHover = (fn: () => void) => {
+  if (!lastMoveTime) {
+    lastMoveTime = Date.now()
+  }
+
+  if (Date.now() - lastMoveTime > MERGE_TIME) {
+    dragEnd()
+    lastMoveTime = 0
+    moveTime = setTimeout(() => {
+      fn()
+    }, MERGE_TIME)
+  }
+}
+const dragEnd = () => {
+  clearTimeout(moveTime)
 }
