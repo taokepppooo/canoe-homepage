@@ -8,21 +8,17 @@ const props = defineProps<{
 }>()
 
 const { width, height } = toRefs(props)
-const attrs = useAttrs()
-const img = ref<string>(attrs.img as string)
 
-const ns = useNamespace('desktop-app-icon')
+const ns = useNamespace('desktop-app-folder')
 const { appCSSConstant } = useDesktopGlobal()
 </script>
 
 <template>
-  <div :class="ns.b()">
-    <img :class="ns.b('img')" :src="img" />
-  </div>
+  <div :class="ns.b()"></div>
 </template>
 
 <style lang="less">
-@ns: ~'@{namespace}-desktop-app-icon';
+@ns: ~'@{namespace}-desktop-app-folder';
 
 .@{ns} {
   width: v-bind(width);
@@ -30,13 +26,5 @@ const { appCSSConstant } = useDesktopGlobal()
   overflow: hidden;
   border-radius: v-bind('appCSSConstant.borderRadius');
   box-shadow: 0 0 10px #00000026;
-
-  &-img {
-    background-color: #febc04;
-    background-size: cover;
-    background-repeat: no-repeat;
-    width: inherit;
-    height: inherit;
-  }
 }
 </style>

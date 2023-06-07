@@ -2,14 +2,14 @@ import { multiply, divide } from 'lodash-es'
 import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
-import type { AppCSSConstant, AppSize } from '@/types/desktop'
+import type { AppCSSConstant, AppSize, App } from '@/types/desktop'
 
 export const useDesktop = (
   desktopHeight: Ref<string>,
   desktopRef: Ref,
   appCSSConstant: Ref<AppCSSConstant>,
   appSize: Ref<AppSize>,
-  apps: Ref<[{ [key: string]: object }]>
+  apps: Ref<Array<App>>
 ) => {
   const layoutStore = useLayoutStore()
 
@@ -33,7 +33,8 @@ export const useDesktopSortable = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ns: any,
   appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>
+  appSize: Ref<AppSize>,
+  apps: Ref<Array<App>>
 ) => {
   const ContainerWidthToWidthDistance = divide(
     parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
@@ -44,8 +45,12 @@ export const useDesktopSortable = (
     2
   )
 
+  let oldIndex: number
   useSortable(element, {
     handle: `.${ns.b('app')}-wrapper`,
+    onStart(evt) {
+      oldIndex = evt.oldIndex as number
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
       const {
@@ -60,6 +65,7 @@ export const useDesktopSortable = (
       ) {
         dragHover(() => {
           const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+          apps.value[relatedIndex].isFolder = true
           console.log('Moved over index:', relatedIndex)
         })
 
@@ -152,7 +158,7 @@ const sort = (
 
 let moveTime: NodeJS.Timeout
 let lastMoveTime: number
-const MERGE_TIME = 1000
+const MERGE_TIME = 700
 const dragHover = (fn: () => void) => {
   if (!lastMoveTime) {
     lastMoveTime = Date.now()

@@ -5,6 +5,13 @@ import DesktopAppIcon from './src/DesktopAppIcon.vue'
 
 const ns = useNamespace('desktop-app')
 
+const props = defineProps<{
+  title: string
+  isFolder: boolean
+}>()
+
+const { title, isFolder } = toRefs(props)
+
 const attrs = useAttrs()
 
 const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['gap-columns'])
@@ -13,8 +20,19 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
 <template>
   <div :class="ns.b()">
     <div :class="ns.b('wrapper')">
-      <DesktopAppIcon :width="size.width" :height="size.height" v-bind="attrs"></DesktopAppIcon>
-      <p :class="ns.e('title')">iTab新手引导22222222222</p>
+      <DesktopAppFolder
+        v-if="isFolder"
+        :width="size.width"
+        :height="size.height"
+        v-bind="attrs"
+      ></DesktopAppFolder>
+      <DesktopAppIcon
+        v-else
+        :width="size.width"
+        :height="size.height"
+        v-bind="attrs"
+      ></DesktopAppIcon>
+      <p :class="ns.e('title')">{{ title }}</p>
     </div>
   </div>
 </template>

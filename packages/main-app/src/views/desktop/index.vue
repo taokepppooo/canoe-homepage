@@ -2,6 +2,7 @@
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktop, useDesktopSortable } from '@/hooks/desktop/useDesktop'
+import type { App } from '@/types/desktop'
 
 const ns = useNamespace('desktop')
 const { appCSSConstant, appSize } = useDesktopGlobal()
@@ -11,19 +12,21 @@ const desktopHeight = ref('auto')
 
 // TODO: 替换数据
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const apps = ref<[{ [key: string]: any }]>([{}])
+const apps = ref<Array<App>>([])
 const desktopRef = ref()
 
 for (let i = 0; i < 100; i++) {
   apps.value.push({
-    id: `${i}`
+    title: `${i}`,
+    img: 'https://files.codelife.cc/icons/guide.svg',
+    isFolder: false
   })
 }
 
 nextTick(() => {
   const element = appsRef.value
 
-  useDesktopSortable(element, ns, appCSSConstant, appSize)
+  useDesktopSortable(element, ns, appCSSConstant, appSize, apps)
 
   useDesktop(desktopHeight, desktopRef, appCSSConstant, appSize, apps)
 })
@@ -32,7 +35,15 @@ nextTick(() => {
 <template>
   <div ref="desktopRef" :class="ns.b()">
     <div ref="appsRef" :class="ns.e('apps')">
-      <DesktopApp v-for="(app, index) in apps" :key="index" :gap-rows="1" :gap-columns="1" />
+      <DesktopApp
+        v-for="(app, index) in apps"
+        :key="index"
+        :title="app.title"
+        :img="app.img"
+        :is-folder="app.isFolder"
+        :gap-rows="1"
+        :gap-columns="1"
+      />
     </div>
   </div>
 </template>
