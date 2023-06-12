@@ -2,14 +2,18 @@ import { multiply, divide } from 'lodash-es'
 import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
-import type { AppCSSConstant, AppSize, App } from '@/types/desktop'
+import { useDesktopStore } from '@/stores/desktop'
+import type { AppCSSConstant, AppSize } from '@/types/desktop'
+
+const desktopStore = useDesktopStore()
+
+inject('openFolderModal')
 
 export const useDesktop = (
   desktopHeight: Ref<string>,
   desktopRef: Ref,
   appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>,
-  apps: Ref<Array<App>>
+  appSize: Ref<AppSize>
 ) => {
   const layoutStore = useLayoutStore()
 
@@ -25,7 +29,7 @@ export const useDesktop = (
   const __height = parseInt(appSize.value.height)
   const verticalAppTotal = Math.floor((calcHeight + __gridGapY) / (__gridGapY + __height))
 
-  apps.value.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.value.length)
+  desktopStore.apps.splice(multiply(horizontalAppTotal, verticalAppTotal), desktopStore.apps.length)
 }
 
 export const useDesktopSortable = (
@@ -33,8 +37,7 @@ export const useDesktopSortable = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ns: any,
   appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>,
-  apps: Ref<Array<App>>
+  appSize: Ref<AppSize>
 ) => {
   const ContainerWidthToWidthDistance = divide(
     parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
@@ -45,11 +48,12 @@ export const useDesktopSortable = (
     2
   )
 
-  let oldIndex: number
+  let draggedIndex = 0
   useSortable(element, {
     handle: `.${ns.b('app')}-wrapper`,
-    onStart(evt) {
-      oldIndex = evt.oldIndex as number
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onStart: (evt: any) => {
+      draggedIndex = evt.oldIndex
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
@@ -65,7 +69,8 @@ export const useDesktopSortable = (
       ) {
         dragHover(() => {
           const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
-          apps.value[relatedIndex].isFolder = true
+          desktopStore.apps[relatedIndex].isFolder = true
+          console.log('draggedIndex:', draggedIndex)
           console.log('Moved over index:', relatedIndex)
         })
 

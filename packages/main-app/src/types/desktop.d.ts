@@ -15,4 +15,6 @@ export interface App {
   title: string
   img: string
   isFolder: boolean
+  child?: Array<APP>
+  appDragIndex?: number
 }
