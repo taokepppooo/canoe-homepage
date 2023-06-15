@@ -3,7 +3,7 @@ import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
-import type { AppCSSConstant, AppSize } from '@/types/desktop'
+import type { AppCSSConstant, AppSize, App } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
 
@@ -11,7 +11,8 @@ export const useDesktop = (
   desktopHeight: Ref<string>,
   desktopRef: Ref,
   appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>
+  appSize: Ref<AppSize>,
+  apps: App[]
 ) => {
   const layoutStore = useLayoutStore()
 
@@ -27,7 +28,7 @@ export const useDesktop = (
   const __height = parseInt(appSize.value.height)
   const verticalAppTotal = Math.floor((calcHeight + __gridGapY) / (__gridGapY + __height))
 
-  desktopStore.apps.splice(multiply(horizontalAppTotal, verticalAppTotal), desktopStore.apps.length)
+  apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
 export const useDesktopSortable = (
@@ -35,7 +36,9 @@ export const useDesktopSortable = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ns: any,
   appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>
+  appSize: Ref<AppSize>,
+  apps: App[],
+  notFolder?: boolean
 ) => {
   const ContainerWidthToWidthDistance = divide(
     parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
@@ -52,7 +55,7 @@ export const useDesktopSortable = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
       const index = evt.oldIndex
-      draggedId = desktopStore.apps.find((app, i) => i === index)?.id || ''
+      draggedId = apps.find((app, i) => i === index)?.id || ''
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
@@ -64,7 +67,8 @@ export const useDesktopSortable = (
         clientX > relatedRect.left + ContainerWidthToWidthDistance &&
         clientX < relatedRect.right - ContainerWidthToWidthDistance &&
         clientY > relatedRect.top + ContainerHeightToHeightDistance &&
-        clientY < relatedRect.bottom - ContainerHeightToHeightDistance
+        clientY < relatedRect.bottom - ContainerHeightToHeightDistance &&
+        !notFolder
       ) {
         // 控制文件夹图标弹窗的显示
         if (draggedId !== desktopStore.draggedId) {
@@ -73,7 +77,8 @@ export const useDesktopSortable = (
 
         dragHover(() => {
           const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
-          desktopStore.apps[relatedIndex].isFolder = true
+          apps[relatedIndex].isFolder = true
+          desktopStore.relatedId = apps[relatedIndex].id
         })
 
         return false

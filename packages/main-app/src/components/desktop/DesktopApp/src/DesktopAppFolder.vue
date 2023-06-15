@@ -38,7 +38,7 @@ watch(
 <template>
   <div>
     <div :class="ns.b()" @click="handleClick"></div>
-    <DesktopAppFolderModal ref="appModalRef"></DesktopAppFolderModal>
+    <DesktopAppFolderModal ref="appModalRef" :width="width" :height="width"></DesktopAppFolderModal>
   </div>
 </template>
 

@@ -11,7 +11,6 @@ const { appCSSConstant, appSize } = useDesktopGlobal()
 const appsRef = ref()
 const desktopHeight = ref('auto')
 const desktopStore = useDesktopStore()
-
 const desktopRef = ref()
 
 // TODO: 替换数据
@@ -28,9 +27,9 @@ console.log('desktopStore.apps', desktopStore.apps)
 nextTick(() => {
   const element = appsRef.value
 
-  useDesktopSortable(element, ns, appCSSConstant, appSize)
+  useDesktopSortable(element, ns, appCSSConstant, appSize, desktopStore.apps)
 
-  useDesktop(desktopHeight, desktopRef, appCSSConstant, appSize)
+  useDesktop(desktopHeight, desktopRef, appCSSConstant, appSize, desktopStore.apps)
 })
 </script>
 
@@ -38,8 +37,8 @@ nextTick(() => {
   <div ref="desktopRef" :class="ns.b()">
     <div ref="appsRef" :class="ns.e('apps')">
       <DesktopApp
-        v-for="(app, index) in desktopStore.apps"
-        :key="index"
+        v-for="app in desktopStore.apps"
+        :key="app.id"
         :child="app.child"
         :title="app.title"
         :img="app.img"

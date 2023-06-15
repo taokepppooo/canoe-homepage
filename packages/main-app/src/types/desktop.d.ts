@@ -11,11 +11,16 @@ export interface AppSize {
   height: string
 }
 
+export interface ChildApp {
+  name: string
+  value: Array<App>
+}
+
 export interface App {
   id: string
   title: string
   img: string
   isFolder: boolean
-  child?: Array<APP>
+  child?: ChildApp
   appDragIndex?: number
 }
