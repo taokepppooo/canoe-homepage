@@ -7,8 +7,6 @@ import type { AppCSSConstant, AppSize } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
 
-inject('openFolderModal')
-
 export const useDesktop = (
   desktopHeight: Ref<string>,
   desktopRef: Ref,
@@ -48,12 +46,13 @@ export const useDesktopSortable = (
     2
   )
 
-  let draggedIndex = 0
+  let draggedId = ''
   useSortable(element, {
     handle: `.${ns.b('app')}-wrapper`,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
-      draggedIndex = evt.oldIndex
+      const index = evt.oldIndex
+      draggedId = desktopStore.apps.find((app, i) => i === index)?.id || ''
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
@@ -67,11 +66,14 @@ export const useDesktopSortable = (
         clientY > relatedRect.top + ContainerHeightToHeightDistance &&
         clientY < relatedRect.bottom - ContainerHeightToHeightDistance
       ) {
+        // 控制文件夹图标弹窗的显示
+        if (draggedId !== desktopStore.draggedId) {
+          desktopStore.draggedId = draggedId
+        }
+
         dragHover(() => {
           const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
           desktopStore.apps[relatedIndex].isFolder = true
-          console.log('draggedIndex:', draggedIndex)
-          console.log('Moved over index:', relatedIndex)
         })
 
         return false

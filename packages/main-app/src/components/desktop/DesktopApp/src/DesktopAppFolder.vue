@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { nextTick } from 'process'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
+import { useDesktopStore } from '@/stores/desktop'
 
 const ns = useNamespace('desktop-app-folder')
+const desktopStore = useDesktopStore()
 const { appCSSConstant } = useDesktopGlobal()
 
 const props = defineProps<{
@@ -17,7 +20,19 @@ const handleClick = () => {
   appModalRef.value.open()
 }
 
-provide('openFolderModal', handleClick)
+watch(
+  () => desktopStore.draggedId,
+  (newValue, oldValue) => {
+    nextTick(() => {
+      if (newValue !== oldValue) {
+        appModalRef.value.open()
+      }
+    })
+  },
+  {
+    immediate: true
+  }
+)
 </script>
 
 <template>

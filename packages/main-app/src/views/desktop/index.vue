@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { v4 as uuidv4 } from 'uuid'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktop, useDesktopSortable } from '@/hooks/desktop/useDesktop'
@@ -16,6 +17,7 @@ const desktopRef = ref()
 // TODO: 替换数据
 for (let i = 0; i < 100; i++) {
   desktopStore.apps.push({
+    id: uuidv4(),
     title: `${i}`,
     img: 'https://files.codelife.cc/icons/guide.svg',
     isFolder: false

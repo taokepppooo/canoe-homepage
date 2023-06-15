@@ -12,6 +12,7 @@ export interface AppSize {
 }
 
 export interface App {
+  id: string
   title: string
   img: string
   isFolder: boolean

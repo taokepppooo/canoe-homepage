@@ -52,7 +52,7 @@ const handleMouseLeave = () => {
     @mouseleave="handleMouseLeave"
   >
     <ElTooltip
-      :content="item!.toolContent"
+      :content="item?.toolContent"
       :popper-class="ns.e('popper')"
       placement="right"
       effect="customized"
