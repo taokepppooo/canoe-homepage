@@ -22,7 +22,6 @@ for (let i = 0; i < 100; i++) {
     isFolder: false
   })
 }
-console.log('desktopStore.apps', desktopStore.apps)
 
 nextTick(() => {
   const element = appsRef.value
@@ -38,6 +37,7 @@ nextTick(() => {
     <div ref="appsRef" :class="ns.e('apps')">
       <DesktopApp
         v-for="app in desktopStore.apps"
+        :id="app.id"
         :key="app.id"
         :child="app.child"
         :title="app.title"

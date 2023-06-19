@@ -32,6 +32,66 @@ const open = () => {
         img: apps.value.img,
         isFolder: false
       })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
     }
 
     nextTick(() => {
@@ -52,6 +112,7 @@ defineExpose({
     v-model="visible"
     :class="ns.b()"
     :show-close="false"
+    width="50%"
     append-to-body
     align-center
     close-on-press-escape
@@ -63,7 +124,7 @@ defineExpose({
     </template>
     <div :class="ns.b('body')">
       <div ref="desktopRef" :class="ns.be('body', 'desktop')">
-        <div ref="appsRef" :class="ns.be('body', 'apps')">
+        <div ref="appsRef" :class="ns.be('body__desktop', 'apps')">
           <DesktopApp
             v-for="app in apps.child?.value"
             :key="app.id"
@@ -90,7 +151,7 @@ defineExpose({
 
   .el-dialog__header {
     position: absolute;
-    top: -85px;
+    top: -70px;
     left: 50%;
     width: 210px;
     transform: translateX(-50%);
@@ -116,20 +177,19 @@ defineExpose({
     }
   }
 
-  &.body {
+  &-body {
     &__desktop {
-      width: 70vw;
       height: v-bind('desktopHeight');
       margin: 0 auto;
-    }
 
-    &__apps {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, v-bind('appSize.containerWidth'));
-      grid-template-rows: repeat(auto-fill, v-bind('appSize.containerHeight'));
-      grid-gap: v-bind('appCSSConstant.gridGapY') v-bind('appCSSConstant.gridGapX');
-      justify-content: center;
-      user-select: none;
+      &__apps {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, v-bind('appSize.containerWidth'));
+        grid-template-rows: repeat(auto-fill, v-bind('appSize.containerHeight'));
+        grid-gap: v-bind('appCSSConstant.gridGapY') v-bind('appCSSConstant.gridGapX');
+        justify-content: center;
+        user-select: none;
+      }
     }
   }
 }

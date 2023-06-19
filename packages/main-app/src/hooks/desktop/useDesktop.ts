@@ -70,7 +70,6 @@ export const useDesktopSortable = (
         clientY < relatedRect.bottom - ContainerHeightToHeightDistance &&
         !notFolder
       ) {
-        // 控制文件夹图标弹窗的显示
         if (draggedId !== desktopStore.draggedId) {
           desktopStore.draggedId = draggedId
         }
@@ -78,7 +77,9 @@ export const useDesktopSortable = (
         dragHover(() => {
           const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
           apps[relatedIndex].isFolder = true
-          desktopStore.relatedId = apps[relatedIndex].id
+          if (apps[relatedIndex].id !== desktopStore.relatedId) {
+            desktopStore.relatedId = apps[relatedIndex].id
+          }
         })
 
         return false

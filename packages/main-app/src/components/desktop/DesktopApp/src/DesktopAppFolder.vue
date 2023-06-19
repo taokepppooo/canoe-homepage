@@ -15,16 +15,18 @@ const props = defineProps<{
 
 const { width, height } = toRefs(props)
 const appModalRef = ref()
+const attrs = useAttrs()
 
 const handleClick = () => {
   appModalRef.value.open()
 }
 
 watch(
-  () => desktopStore.draggedId,
-  (newValue, oldValue) => {
+  () => desktopStore.relatedId,
+  () => {
     nextTick(() => {
-      if (newValue !== oldValue) {
+      // 目标id与当前id相同，打开文件夹弹窗
+      if (desktopStore.relatedId === attrs.id) {
         appModalRef.value.open()
       }
     })
@@ -38,7 +40,7 @@ watch(
 <template>
   <div>
     <div :class="ns.b()" @click="handleClick"></div>
-    <DesktopAppFolderModal ref="appModalRef" :width="width" :height="width"></DesktopAppFolderModal>
+    <DesktopAppFolderModal ref="appModalRef"></DesktopAppFolderModal>
   </div>
 </template>
 
