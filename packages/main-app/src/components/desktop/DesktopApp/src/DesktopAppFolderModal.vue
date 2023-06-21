@@ -123,8 +123,17 @@ defineExpose({
       </div>
     </template>
     <div :class="ns.b('body')">
-      <div ref="desktopRef" :class="ns.be('body', 'desktop')">
-        <div ref="appsRef" :class="ns.be('body__desktop', 'apps')">
+      <div ref="desktopRef" :class="ns.be('body', 'desktop')" :style="{ height: desktopHeight }">
+        <div
+          ref="appsRef"
+          :class="ns.be('body__desktop', 'apps')"
+          :style="{
+            display: 'grid',
+            'grid-template-columns': `repeat(auto-fill, ${appSize.containerWidth})`,
+            'grid-template-rows': `repeat(auto-fill, ${appSize.containerHeight})`,
+            'grid-gap': `${appCSSConstant.gridGapY} ${appCSSConstant.gridGapX}`
+          }"
+        >
           <DesktopApp
             v-for="app in apps.child?.value"
             :key="app.id"
@@ -179,14 +188,9 @@ defineExpose({
 
   &-body {
     &__desktop {
-      height: v-bind('desktopHeight');
       margin: 0 auto;
 
       &__apps {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, v-bind('appSize.containerWidth'));
-        grid-template-rows: repeat(auto-fill, v-bind('appSize.containerHeight'));
-        grid-gap: v-bind('appCSSConstant.gridGapY') v-bind('appCSSConstant.gridGapX');
         justify-content: center;
         user-select: none;
       }
