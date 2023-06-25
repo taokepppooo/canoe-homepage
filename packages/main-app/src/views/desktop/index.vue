@@ -1,45 +1,54 @@
 <script setup lang="ts">
+import { v4 as uuidv4 } from 'uuid'
 import { useNamespace } from '@/hooks/useNamespace'
-import { useSortable } from '@/hooks/useSortable'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import { useDesktop } from '@/hooks/desktop/useDesktop'
+import { useDesktop, useDesktopSortable } from '@/hooks/desktop/useDesktop'
+import { useDesktopStore } from '@/stores/desktop'
 
 const ns = useNamespace('desktop')
 const { appCSSConstant, appSize } = useDesktopGlobal()
 
 const appsRef = ref()
 const desktopHeight = ref('auto')
-
-// TODO: 替换数据
-const apps = ref<[{ [key: string]: object }]>([{}])
+const desktopStore = useDesktopStore()
 const desktopRef = ref()
 
+// TODO: 替换数据
 for (let i = 0; i < 100; i++) {
-  apps.value.push({})
+  desktopStore.apps.push({
+    id: uuidv4(),
+    title: `${i}`,
+    img: 'https://files.codelife.cc/icons/guide.svg',
+    isFolder: false
+  })
 }
 
 nextTick(() => {
   const element = appsRef.value
-  useSortable(element)
 
-  useDesktop(
-    desktopHeight,
-    desktopRef,
-    appCSSConstant.value.gridGapX,
-    appSize.value.width,
-    appCSSConstant.value.gridGapY,
-    appSize.value.height,
-    apps
-  )
+  useDesktopSortable({
+    element,
+    list: desktopStore.apps,
+    options: {
+      group: 'desktop'
+    }
+  })
+
+  useDesktop(desktopHeight, desktopRef, desktopStore.apps)
 })
 </script>
 
 <template>
   <div ref="desktopRef" :class="ns.b()">
     <div ref="appsRef" :class="ns.e('apps')">
-      <DesktopApp v-for="(app, index) in apps" :key="index" :gap-rows="1" :gap-columns="1" />
+      <DesktopApp
+        v-for="app in desktopStore.apps"
+        :key="app.id"
+        :app="app"
+        :gap-rows="1"
+        :gap-columns="1"
+      />
     </div>
-    <div style="height: 20px"></div>
   </div>
 </template>
 
@@ -53,8 +62,8 @@ nextTick(() => {
 
   &__apps {
     display: grid;
-    grid-template-columns: repeat(auto-fill, v-bind('appSize.width'));
-    grid-template-rows: repeat(auto-fill, v-bind('appSize.height'));
+    grid-template-columns: repeat(auto-fill, v-bind('appSize.containerWidth'));
+    grid-template-rows: repeat(auto-fill, v-bind('appSize.containerHeight'));
     grid-gap: v-bind('appCSSConstant.gridGapY') v-bind('appCSSConstant.gridGapX');
     justify-content: center;
     user-select: none;

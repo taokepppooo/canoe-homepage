@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
+import type { App } from '@/types/desktop'
 
 const props = defineProps<{
   width: string
   height: string
 }>()
 
-const { width, height } = toRefs(props)
-
 const ns = useNamespace('desktop-app-icon')
 const { appCSSConstant } = useDesktopGlobal()
+
+const { width, height } = toRefs(props)
+const app: Ref<App> | undefined = inject('app')
 </script>
 
 <template>
   <div :class="ns.b()">
-    <img :class="ns.b('img')" src="https://files.codelife.cc/icons/guide.svg" />
+    <img :class="ns.b('img')" :src="app?.img" />
   </div>
 </template>
 
@@ -28,6 +30,7 @@ const { appCSSConstant } = useDesktopGlobal()
   overflow: hidden;
   border-radius: v-bind('appCSSConstant.borderRadius');
   box-shadow: 0 0 10px #00000026;
+  cursor: pointer;
 
   &-img {
     background-color: #febc04;
