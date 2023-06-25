@@ -2,37 +2,37 @@
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopApp } from '@/hooks/desktop/useDesktopApp'
 import DesktopAppIcon from './src/DesktopAppIcon.vue'
+import type { App } from '@/types/desktop'
 
 const ns = useNamespace('desktop-app')
 
 const props = defineProps<{
-  title: string
-  isFolder: boolean
+  gapRows: number
+  gapColumns: number
+  app: App
 }>()
 
-const { title, isFolder } = toRefs(props)
+const { gapRows, gapColumns, app } = toRefs(props)
 
-const attrs = useAttrs()
+const {
+  gapRows: desktopGapRows,
+  gapColumns: desktopGColumns,
+  size
+} = useDesktopApp(gapRows, gapColumns)
 
-const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['gap-columns'])
+provide('app', app)
 </script>
 
 <template>
   <div :class="ns.b()">
     <div :class="ns.b('wrapper')">
       <DesktopAppFolder
-        v-if="isFolder"
+        v-if="app.isFolder"
         :width="size.width"
         :height="size.height"
-        v-bind="attrs"
       ></DesktopAppFolder>
-      <DesktopAppIcon
-        v-else
-        :width="size.width"
-        :height="size.height"
-        v-bind="attrs"
-      ></DesktopAppIcon>
-      <p :class="ns.e('title')">{{ title }}</p>
+      <DesktopAppIcon v-else :width="size.width" :height="size.height"></DesktopAppIcon>
+      <p :class="ns.e('title')">{{ app.title }}</p>
     </div>
   </div>
 </template>
@@ -42,8 +42,8 @@ const { gapRows, gapColumns, size } = useDesktopApp(attrs['gap-rows'], attrs['ga
 @ns: ~'@{namespace}-desktop-app';
 
 .@{ns} {
-  grid-row: span v-bind(gapRows);
-  grid-column: span v-bind(gapColumns);
+  grid-row: span v-bind(desktopGapRows);
+  grid-column: span v-bind(desktopGColumns);
   width: v-bind('size.containerWidth');
   height: v-bind('size.containerHeight');
   position: relative;

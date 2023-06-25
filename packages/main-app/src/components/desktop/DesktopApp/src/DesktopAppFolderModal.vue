@@ -8,8 +8,8 @@ import { useDesktopStore } from '@/stores/desktop'
 const ns = useNamespace('desktop-folder-modal')
 const { appCSSConstant, appSize } = useDesktopGlobal()
 const desktopStore = useDesktopStore()
-const desktopRef = ref()
 
+const desktopRef = ref()
 const visible = ref(false)
 const desktopHeight = ref('auto')
 const appsRef = ref()
@@ -18,6 +18,7 @@ const apps = ref()
 
 const open = (id?: string) => {
   visible.value = true
+  // id存在，说明是从文件夹打开的
   index.value = desktopStore.apps.findIndex((item) => item.id === (id || desktopStore.relatedId))
   apps.value = desktopStore.apps[index.value]
 
@@ -98,7 +99,7 @@ const open = (id?: string) => {
     nextTick(() => {
       const element = appsRef.value
 
-      useDesktopSortable(element, apps.value.child?.value || [], true)
+      useDesktopSortable({ element, list: apps.value.child?.value, withFolder: false })
     })
   }
 }
@@ -136,11 +137,8 @@ defineExpose({
         <div ref="appsRef" :class="ns.be('body__desktop', 'apps')" :style="gridStyles">
           <DesktopApp
             v-for="app in apps.child?.value"
-            :id="app.id"
             :key="app.id"
-            :title="app.title"
-            :img="app.img"
-            :is-folder="app.isFolder"
+            :app="app"
             :gap-rows="1"
             :gap-columns="1"
           />

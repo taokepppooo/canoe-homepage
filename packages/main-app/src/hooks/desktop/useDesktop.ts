@@ -4,7 +4,7 @@ import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import type { App } from '@/types/desktop'
+import type { App, DesktopSortOptions } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
 const { appCSSConstant, appSize } = useDesktopGlobal()
@@ -27,7 +27,12 @@ export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: Ap
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
-export const useDesktopSortable = (element: HTMLElement, apps: App[], notFolder = false) => {
+export const useDesktopSortable = ({
+  element,
+  list,
+  options,
+  withFolder = true
+}: DesktopSortOptions) => {
   const ContainerWidthToWidthDistance = divide(
     parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
     2
@@ -39,10 +44,11 @@ export const useDesktopSortable = (element: HTMLElement, apps: App[], notFolder 
 
   let draggedId = ''
   useSortable(element, {
+    ...options,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
       const index = evt.oldIndex
-      draggedId = apps.find((app, i) => i === index)?.id || ''
+      draggedId = list.find((app, i) => i === index)?.id || ''
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
@@ -55,7 +61,7 @@ export const useDesktopSortable = (element: HTMLElement, apps: App[], notFolder 
         clientX < relatedRect.right - ContainerWidthToWidthDistance &&
         clientY > relatedRect.top + ContainerHeightToHeightDistance &&
         clientY < relatedRect.bottom - ContainerHeightToHeightDistance &&
-        !notFolder
+        withFolder
       ) {
         if (draggedId !== desktopStore.draggedId) {
           desktopStore.draggedId = draggedId
@@ -63,9 +69,9 @@ export const useDesktopSortable = (element: HTMLElement, apps: App[], notFolder 
 
         dragHover(() => {
           const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
-          apps[relatedIndex].isFolder = true
-          if (apps[relatedIndex].id !== desktopStore.relatedId) {
-            desktopStore.relatedId = apps[relatedIndex].id
+          list[relatedIndex].isFolder = true
+          if (list[relatedIndex].id !== desktopStore.relatedId) {
+            desktopStore.relatedId = list[relatedIndex].id
           }
         })
 

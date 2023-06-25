@@ -15,7 +15,8 @@ const ns = useNamespace('layouts')
 
 .@{ns} {
   height: 100vh;
-  background: url('https://media.discordapp.net/attachments/945077390839787570/1120261039792078870/cb23_The_calm_waters_flat_vector_art_anime_high_quality_8k_desk_265d7168-d72c-4e73-a496-cc9455d70f12.png?width=1181&height=662');
+  width: 100%;
+  background: url('https://th.bing.com/th/id/R.1e9cdfa1145f629462d906b9d1f2dd5c?rik=paiVwLyXEcouzg&riu=http%3a%2f%2fdata.znds.com%2fattachment%2fforum%2f201507%2f25%2f141327t7pbozz7flx7dtp3.jpg&ehk=%2bvr8ZRqoSJltFV1pOHoHrERjTFGPHVZNQ7rP5nGbdGM%3d&risl=&pid=ImgRaw&r=0');
   background-size: cover;
 }
 </style>

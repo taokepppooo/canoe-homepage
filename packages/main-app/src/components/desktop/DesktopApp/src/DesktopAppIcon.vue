@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
+import type { App } from '@/types/desktop'
 
 const props = defineProps<{
   width: string
   height: string
 }>()
 
-const { width, height } = toRefs(props)
-const attrs = useAttrs()
-const img = ref<string>(attrs.img as string)
-
 const ns = useNamespace('desktop-app-icon')
 const { appCSSConstant } = useDesktopGlobal()
+
+const { width, height } = toRefs(props)
+const app: Ref<App> | undefined = inject('app')
 </script>
 
 <template>
   <div :class="ns.b()">
-    <img :class="ns.b('img')" :src="img" />
+    <img :class="ns.b('img')" :src="app?.img" />
   </div>
 </template>
 

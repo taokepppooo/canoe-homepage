@@ -26,7 +26,7 @@ for (let i = 0; i < 100; i++) {
 nextTick(() => {
   const element = appsRef.value
 
-  useDesktopSortable(element, desktopStore.apps)
+  useDesktopSortable({ element, list: desktopStore.apps })
 
   useDesktop(desktopHeight, desktopRef, desktopStore.apps)
 })
@@ -37,12 +37,8 @@ nextTick(() => {
     <div ref="appsRef" :class="ns.e('apps')">
       <DesktopApp
         v-for="app in desktopStore.apps"
-        :id="app.id"
         :key="app.id"
-        :child="app.child"
-        :title="app.title"
-        :img="app.img"
-        :is-folder="app.isFolder"
+        :app="app"
         :gap-rows="1"
         :gap-columns="1"
       />

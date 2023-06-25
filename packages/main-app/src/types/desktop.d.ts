@@ -24,3 +24,11 @@ export interface App {
   child?: ChildApp
   appDragIndex?: number
 }
+
+export interface DesktopSortOptions {
+  element: HTMLElement
+  list: App[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  options?: any
+  withFolder?: boolean
+}

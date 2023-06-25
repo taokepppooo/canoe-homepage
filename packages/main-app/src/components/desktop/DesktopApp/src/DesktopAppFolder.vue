@@ -3,6 +3,7 @@ import { nextTick } from 'process'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
+import type { App } from '@/types/desktop'
 
 const ns = useNamespace('desktop-app-folder')
 const desktopStore = useDesktopStore()
@@ -14,11 +15,11 @@ const props = defineProps<{
 }>()
 
 const { width, height } = toRefs(props)
+const app: Ref<App> | undefined = inject('app')
 const appModalRef = ref()
-const attrs = useAttrs()
 
 const handleClick = () => {
-  appModalRef.value.open(attrs.id)
+  appModalRef.value.open(app?.value.id)
 }
 
 watch(
@@ -26,7 +27,7 @@ watch(
   () => {
     nextTick(() => {
       // 目标id与当前id相同，打开文件夹弹窗
-      if (desktopStore.relatedId === attrs.id) {
+      if (desktopStore.relatedId === app?.value.id) {
         appModalRef.value.open()
       }
     })
