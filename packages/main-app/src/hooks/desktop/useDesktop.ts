@@ -49,6 +49,8 @@ export const useDesktopSortable = ({
     onStart: (evt: any) => {
       const index = evt.oldIndex
       draggedId = list.find((app, i) => i === index)?.id || ''
+
+      desktopStore.isDragging = true
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onMove: (evt: any) => {
@@ -85,6 +87,8 @@ export const useDesktopSortable = ({
     },
     onEnd: () => {
       dragEnd()
+
+      desktopStore.isDragging = false
     }
   })
 }

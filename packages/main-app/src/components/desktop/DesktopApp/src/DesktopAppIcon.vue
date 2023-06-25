@@ -30,6 +30,7 @@ const app: Ref<App> | undefined = inject('app')
   overflow: hidden;
   border-radius: v-bind('appCSSConstant.borderRadius');
   box-shadow: 0 0 10px #00000026;
+  cursor: pointer;
 
   &-img {
     background-color: #febc04;

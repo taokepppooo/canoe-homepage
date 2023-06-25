@@ -10,11 +10,23 @@ const { appCSSConstant, appSize } = useDesktopGlobal()
 const desktopStore = useDesktopStore()
 
 const desktopRef = ref()
+const appsRef = ref()
+const bodyRef = ref()
 const visible = ref(false)
 const desktopHeight = ref('auto')
-const appsRef = ref()
 const index = ref(0)
 const apps = ref()
+
+const { isOutside } = useMouseInElement(bodyRef)
+
+watch(
+  () => isOutside.value,
+  () => {
+    if (desktopStore.isDragging && isOutside.value) {
+      visible.value = false
+    }
+  }
+)
 
 const open = (id?: string) => {
   visible.value = true
@@ -99,7 +111,14 @@ const open = (id?: string) => {
     nextTick(() => {
       const element = appsRef.value
 
-      useDesktopSortable({ element, list: apps.value.child?.value, withFolder: false })
+      useDesktopSortable({
+        element,
+        list: apps.value.child?.value,
+        options: {
+          group: 'desktop'
+        },
+        withFolder: false
+      })
     })
   }
 }
@@ -132,7 +151,7 @@ defineExpose({
         <input :value="apps.child?.name" :class="ns.be('header', 'title')" />
       </div>
     </template>
-    <div :class="ns.b('body')">
+    <div ref="bodyRef" :class="ns.b('body')">
       <div ref="desktopRef" :class="ns.be('body', 'desktop')" :style="{ height: desktopHeight }">
         <div ref="appsRef" :class="ns.be('body__desktop', 'apps')" :style="gridStyles">
           <DesktopApp
@@ -181,11 +200,19 @@ defineExpose({
       &:focus {
         background-color: var(--primary-icon-folder-title-bg);
         backdrop-filter: blur(10px);
+        transition: background-color 0.5s;
       }
     }
   }
 
+  .el-dialog__body {
+    padding: 0;
+  }
+
   &-body {
+    /* 此处样式和el-dialog__body相同，处理拖拽时范围的判断 */
+    padding: calc(var(--el-dialog-padding-primary) + 10px) var(--el-dialog-padding-primary);
+
     &__desktop {
       margin: 0 auto;
 

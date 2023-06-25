@@ -39,10 +39,8 @@ watch(
 </script>
 
 <template>
-  <div>
-    <div :class="ns.b()" @click="handleClick"></div>
-    <DesktopAppFolderModal ref="appModalRef"></DesktopAppFolderModal>
-  </div>
+  <div :class="ns.b()" @click="handleClick"></div>
+  <DesktopAppFolderModal ref="appModalRef"></DesktopAppFolderModal>
 </template>
 
 <style lang="less">
@@ -55,5 +53,6 @@ watch(
   overflow: hidden;
   border-radius: v-bind('appCSSConstant.borderRadius');
   box-shadow: 0 0 10px #00000026;
+  cursor: pointer;
 }
 </style>

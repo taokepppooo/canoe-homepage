@@ -26,7 +26,13 @@ for (let i = 0; i < 100; i++) {
 nextTick(() => {
   const element = appsRef.value
 
-  useDesktopSortable({ element, list: desktopStore.apps })
+  useDesktopSortable({
+    element,
+    list: desktopStore.apps,
+    options: {
+      group: 'desktop'
+    }
+  })
 
   useDesktop(desktopHeight, desktopRef, desktopStore.apps)
 })
