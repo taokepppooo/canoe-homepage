@@ -3,17 +3,13 @@ import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
-import type { AppCSSConstant, AppSize, App } from '@/types/desktop'
+import { useDesktopGlobal } from '@/hooks/useGlobal'
+import type { App } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
+const { appCSSConstant, appSize } = useDesktopGlobal()
 
-export const useDesktop = (
-  desktopHeight: Ref<string>,
-  desktopRef: Ref,
-  appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>,
-  apps: App[]
-) => {
+export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: App[]) => {
   const layoutStore = useLayoutStore()
 
   const desktopWidth = calcElementWidth(desktopRef.value)
@@ -31,15 +27,7 @@ export const useDesktop = (
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
-export const useDesktopSortable = (
-  element: HTMLElement,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ns: any,
-  appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>,
-  apps: App[],
-  notFolder?: boolean
-) => {
+export const useDesktopSortable = (element: HTMLElement, apps: App[], notFolder = false) => {
   const ContainerWidthToWidthDistance = divide(
     parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
     2
@@ -51,7 +39,6 @@ export const useDesktopSortable = (
 
   let draggedId = ''
   useSortable(element, {
-    handle: `.${ns.b('app')}-wrapper`,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
       const index = evt.oldIndex
@@ -87,13 +74,7 @@ export const useDesktopSortable = (
         // 排序时会执行定时器中的函数，所以需要在这里清除定时器
         dragEnd()
 
-        return sort(
-          appCSSConstant,
-          appSize,
-          ContainerWidthToWidthDistance,
-          ContainerHeightToHeightDistance,
-          evt
-        )
+        return sort(ContainerWidthToWidthDistance, ContainerHeightToHeightDistance, evt)
       }
     },
     onEnd: () => {
@@ -103,8 +84,6 @@ export const useDesktopSortable = (
 }
 
 const sort = (
-  appCSSConstant: Ref<AppCSSConstant>,
-  appSize: Ref<AppSize>,
   ContainerWidthToWidthDistance: number,
   ContainerHeightToHeightDistance: number,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

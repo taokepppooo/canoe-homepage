@@ -6,8 +6,9 @@ import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 
 const ns = useNamespace('desktop-folder-modal')
-const desktopStore = useDesktopStore()
 const { appCSSConstant, appSize } = useDesktopGlobal()
+const desktopStore = useDesktopStore()
+const desktopRef = ref()
 
 const visible = ref(false)
 const desktopHeight = ref('auto')
@@ -15,9 +16,9 @@ const appsRef = ref()
 const index = ref(0)
 const apps = ref()
 
-const open = () => {
+const open = (id?: string) => {
   visible.value = true
-  index.value = desktopStore.apps.findIndex((item) => item.id === desktopStore.relatedId)
+  index.value = desktopStore.apps.findIndex((item) => item.id === (id || desktopStore.relatedId))
   apps.value = desktopStore.apps[index.value]
 
   if (index.value !== -1) {
@@ -28,67 +29,67 @@ const open = () => {
       }
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: apps.value.title,
+        title: uuidv4(),
         img: apps.value.img,
         isFolder: false
       })
@@ -97,10 +98,17 @@ const open = () => {
     nextTick(() => {
       const element = appsRef.value
 
-      useDesktopSortable(element, ns, appCSSConstant, appSize, apps.value.child?.value || [], false)
+      useDesktopSortable(element, apps.value.child?.value || [], true)
     })
   }
 }
+
+const gridStyles = ref({
+  display: 'grid',
+  'grid-template-columns': `repeat(auto-fill, ${appSize.value.containerWidth})`,
+  'grid-template-rows': `repeat(auto-fill, ${appSize.value.containerHeight})`,
+  'grid-gap': `${appCSSConstant.value.gridGapY} ${appCSSConstant.value.gridGapX}`
+})
 
 defineExpose({
   open
@@ -116,6 +124,7 @@ defineExpose({
     append-to-body
     align-center
     close-on-press-escape
+    destroy-on-close
   >
     <template #header>
       <div :class="ns.b('header')">
@@ -124,18 +133,10 @@ defineExpose({
     </template>
     <div :class="ns.b('body')">
       <div ref="desktopRef" :class="ns.be('body', 'desktop')" :style="{ height: desktopHeight }">
-        <div
-          ref="appsRef"
-          :class="ns.be('body__desktop', 'apps')"
-          :style="{
-            display: 'grid',
-            'grid-template-columns': `repeat(auto-fill, ${appSize.containerWidth})`,
-            'grid-template-rows': `repeat(auto-fill, ${appSize.containerHeight})`,
-            'grid-gap': `${appCSSConstant.gridGapY} ${appCSSConstant.gridGapX}`
-          }"
-        >
+        <div ref="appsRef" :class="ns.be('body__desktop', 'apps')" :style="gridStyles">
           <DesktopApp
             v-for="app in apps.child?.value"
+            :id="app.id"
             :key="app.id"
             :title="app.title"
             :img="app.img"

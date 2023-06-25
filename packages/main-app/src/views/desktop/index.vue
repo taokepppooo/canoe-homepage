@@ -26,9 +26,9 @@ for (let i = 0; i < 100; i++) {
 nextTick(() => {
   const element = appsRef.value
 
-  useDesktopSortable(element, ns, appCSSConstant, appSize, desktopStore.apps)
+  useDesktopSortable(element, desktopStore.apps)
 
-  useDesktop(desktopHeight, desktopRef, appCSSConstant, appSize, desktopStore.apps)
+  useDesktop(desktopHeight, desktopRef, desktopStore.apps)
 })
 </script>
 

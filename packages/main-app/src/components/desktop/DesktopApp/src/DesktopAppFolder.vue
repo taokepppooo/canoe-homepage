@@ -18,7 +18,7 @@ const appModalRef = ref()
 const attrs = useAttrs()
 
 const handleClick = () => {
-  appModalRef.value.open()
+  appModalRef.value.open(attrs.id)
 }
 
 watch(
