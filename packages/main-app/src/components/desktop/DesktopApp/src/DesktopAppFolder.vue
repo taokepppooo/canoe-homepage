@@ -19,7 +19,7 @@ const app: Ref<App> | undefined = inject('app')
 const appModalRef = ref()
 
 const handleClick = () => {
-  appModalRef.value.open(app?.value.id)
+  appModalRef.value.open({ openId: app?.value.id })
 }
 
 watch(
@@ -28,7 +28,7 @@ watch(
     nextTick(() => {
       // 目标id与当前id相同，打开文件夹弹窗
       if (desktopStore.relatedId === app?.value.id) {
-        appModalRef.value.open()
+        appModalRef.value.open({ draggedId: desktopStore.draggedId })
       }
     })
   },
