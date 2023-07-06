@@ -1,3 +1,5 @@
+import type Sortable from 'sortablejs'
+
 export interface AppCSSConstant {
   borderRadius: string
   gridGapX: string
@@ -30,3 +32,11 @@ export interface DesktopSortOptions {
   options?: any
   withFolder?: boolean
 }
+
+type DragStatus = '0' | '1' | '2'
+
+interface MoveEvent extends Sortable.MoveEvent {
+  _timer: NodeJS.Timeout | null
+}
+
+type MoveOriginalEvent = Event & MouseEvent

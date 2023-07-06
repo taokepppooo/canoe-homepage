@@ -1,10 +1,17 @@
-import { multiply, debounce, cloneDeep } from 'lodash-es'
+import { multiply, cloneDeep } from 'lodash-es'
 import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import type { App, DesktopSortOptions } from '@/types/desktop'
+import type {
+  App,
+  DesktopSortOptions,
+  DragStatus,
+  MoveEvent,
+  MoveOriginalEvent
+} from '@/types/desktop'
+import type Sortable from 'sortablejs'
 
 const desktopStore = useDesktopStore()
 const { appCSSConstant, appSize } = useDesktopGlobal()
@@ -27,31 +34,25 @@ export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: Ap
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
-const delay = 1000
+const DELAY = 1000
 let draggedId = ''
-let draggedIndex = 0
 let draggedOffsetX = 0
 let draggedOffsetY = 0
+let draggedIndex = 0
 let relatedIndex = -1
-let timer: any = null
-let isMerge = '0'
+let timer: NodeJS.Timeout | null = null
+let dragStatus: DragStatus = '0' // 0: 初始化 1: 拖拽 2: 合并文件夹
+let moveX = 0
+let moveY = 0
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
-  if (list[draggedIndex].isFolder && !withFolder) isMerge = '1'
+  if (dragStatus !== '0') return
+  if (list[draggedIndex].isFolder && !withFolder) dragStatus = '1'
 
-  const {
-    originalEvent: { clientX, clientY },
-    relatedRect
-  } = evt
+  const { originalEvent, relatedRect } = evt
   const mergeArea = relatedRect.width * relatedRect.height * 0.6
-  const intersectionArea = calculateIntersectionArea(
-    clientX,
-    clientY,
-    draggedOffsetX,
-    draggedOffsetY,
-    relatedRect
-  )
+  const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
   if (intersectionArea > mergeArea) {
     if (draggedId !== desktopStore.draggedId) {
@@ -62,26 +63,45 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
       desktopStore.relatedId = list[relatedIndex].id
     }
 
-    isMerge = '2'
+    dragStatus = '2'
   } else {
-    isMerge = '1'
+    dragStatus = '1'
   }
 }
 
-const onMove = (evt, list, withFolder) => {
+const onMove = (
+  evt: MoveEvent,
+  originalEvent: MoveOriginalEvent,
+  list: App[],
+  withFolder: boolean,
+  sortablejs: Sortable
+) => {
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+
+  // 只有不在同一位置停留时才清除定时器
+  if (timer && moveX !== originalEvent.clientX && moveY !== originalEvent.clientY) {
+    clearTimeout(timer)
+    timer = null
+    moveX = originalEvent.clientX
+    moveY = originalEvent.clientY
+  }
   if (!timer) {
     timer = setTimeout(() => {
-      onMoveHandler(evt, list, withFolder)
-      clearTimeout(timer)
+      evt._timer = timer
       timer = null
-      isMerge = '0'
-    }, delay)
+      onMoveHandler(evt, list, withFolder)
+      sortablejs.options.onMove?.(evt, originalEvent)
+      dragStatus = '0'
+    }, DELAY)
   }
 
-  if (timer && isMerge === '1') {
+  if (evt._timer && dragStatus === '1') {
+    const relatedApp = cloneDeep(list[relatedIndex])
+    list[relatedIndex] = list[draggedIndex]
+    list[draggedIndex] = relatedApp
+
     return true
-  } else if (timer && isMerge === '2') {
+  } else if (evt._timer && dragStatus === '2') {
     return false
   }
 
@@ -104,46 +124,49 @@ export const useDesktopSortable = ({
 
       draggedOffsetX = offsetX
       draggedOffsetY = offsetY
-
       draggedIndex = evt.oldIndex
       draggedId = list.find((app, i) => i === draggedIndex)?.id || ''
 
       desktopStore.isDragging = true
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onMove: (evt: any) => onMove(evt, list, withFolder),
+    onMove: (evt: MoveEvent, originalEvent: MoveOriginalEvent) =>
+      onMove(evt, originalEvent, list, withFolder, sortablejs),
     onEnd: () => {
       desktopStore.isDragging = false
-
-      const relatedApp = cloneDeep(list[relatedIndex])
-      list[relatedIndex] = list[draggedIndex]
-      list[draggedIndex] = relatedApp
+      if (timer) {
+        clearTimeout(timer)
+        timer = null
+      }
     }
   })
 }
 
 const calculateIntersectionArea = (
-  clientX: number,
-  clientY: number,
-  draggedOffsetX: number,
-  draggedOffsetY: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  originalEvent: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   relatedRect: any
 ): number => {
-  const draggedX = clientX - draggedOffsetX
-
-  const draggedY = clientY - draggedOffsetY
+  const originalClientX = originalEvent.clientX - draggedOffsetX
+  const originalClientY = originalEvent.clientY - draggedOffsetY
+  const relatedX = relatedRect.left
+  const relatedY = relatedRect.top
 
   // 计算两个正方形相交的面积
   const overlapX = Math.max(
-    Math.min(draggedX + relatedRect.width, relatedRect.left + relatedRect.width) -
-      Math.max(draggedX, relatedRect.left),
-    0
+    0,
+    Math.min(
+      originalClientX + parseInt(appSize.value.width),
+      relatedX + parseInt(appSize.value.width)
+    ) - Math.max(originalClientX, relatedX)
   )
+
   const overlapY = Math.max(
-    Math.min(draggedY + relatedRect.height, relatedRect.top + relatedRect.height) -
-      Math.max(draggedY, relatedRect.height),
-    0
+    0,
+    Math.min(
+      originalClientY + parseInt(appSize.value.height),
+      relatedY + parseInt(appSize.value.height)
+    ) - Math.max(originalClientY, relatedY)
   )
 
   const intersectionArea = overlapX * overlapY
