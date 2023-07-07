@@ -4,13 +4,7 @@ import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import type {
-  App,
-  DesktopSortOptions,
-  DragStatus,
-  MoveEvent,
-  MoveOriginalEvent
-} from '@/types/desktop'
+import type { App, DesktopSortOptions, DragStatus, MoveOriginalEvent } from '@/types/desktop'
 import type Sortable from 'sortablejs'
 
 const desktopStore = useDesktopStore()
@@ -51,7 +45,8 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
   if (list[draggedIndex].isFolder && !withFolder) dragStatus = '1'
 
   const { originalEvent, relatedRect } = evt
-  const mergeArea = relatedRect.width * relatedRect.height * 0.6
+  const RATIO = 0.6
+  const mergeArea = relatedRect.width * relatedRect.height * RATIO
   const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
   if (intersectionArea > mergeArea) {
@@ -70,7 +65,7 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
 }
 
 const onMove = (
-  evt: MoveEvent,
+  evt: Sortable.MoveEvent,
   originalEvent: MoveOriginalEvent,
   list: App[],
   withFolder: boolean,
@@ -87,7 +82,6 @@ const onMove = (
   }
   if (!timer) {
     timer = setTimeout(() => {
-      evt._timer = timer
       timer = null
       onMoveHandler(evt, list, withFolder)
       sortablejs.options.onMove?.(evt, originalEvent)
@@ -95,13 +89,14 @@ const onMove = (
     }, DELAY)
   }
 
-  if (evt._timer && dragStatus === '1') {
+  if (dragStatus === '1') {
     const relatedApp = cloneDeep(list[relatedIndex])
     list[relatedIndex] = list[draggedIndex]
     list[draggedIndex] = relatedApp
 
     return true
-  } else if (evt._timer && dragStatus === '2') {
+  } else if (dragStatus === '2') {
+    list[draggedIndex].isShow = false
     return false
   }
 
@@ -129,7 +124,7 @@ export const useDesktopSortable = ({
 
       desktopStore.isDragging = true
     },
-    onMove: (evt: MoveEvent, originalEvent: MoveOriginalEvent) =>
+    onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
       onMove(evt, originalEvent, list, withFolder, sortablejs),
     onEnd: () => {
       desktopStore.isDragging = false

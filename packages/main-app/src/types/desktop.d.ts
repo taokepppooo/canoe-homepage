@@ -1,5 +1,3 @@
-import type Sortable from 'sortablejs'
-
 export interface AppCSSConstant {
   borderRadius: string
   gridGapX: string
@@ -23,6 +21,7 @@ export interface App {
   isFolder: boolean
   child?: ChildApp
   appDragIndex?: number
+  isShow: boolean // 是否显示 处理合并时如果采用splice删除元素导致拖拽元素不存在的问题
 }
 
 export interface DesktopSortOptions {
@@ -34,9 +33,5 @@ export interface DesktopSortOptions {
 }
 
 type DragStatus = '0' | '1' | '2'
-
-interface MoveEvent extends Sortable.MoveEvent {
-  _timer: NodeJS.Timeout | null
-}
 
 type MoveOriginalEvent = Event & MouseEvent

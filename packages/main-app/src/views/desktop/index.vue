@@ -19,7 +19,8 @@ for (let i = 0; i < 100; i++) {
     id: uuidv4(),
     title: `${i}`,
     img: 'https://files.codelife.cc/icons/guide.svg',
-    isFolder: false
+    isFolder: false,
+    isShow: true
   })
 }
 
@@ -41,13 +42,9 @@ nextTick(() => {
 <template>
   <div ref="desktopRef" :class="ns.b()">
     <div ref="appsRef" :class="ns.e('apps')">
-      <DesktopApp
-        v-for="app in desktopAppStore.apps"
-        :key="app.id"
-        :app="app"
-        :gap-rows="1"
-        :gap-columns="1"
-      />
+      <template v-for="app in desktopAppStore.apps" :key="app.id">
+        <DesktopApp v-show="app.isShow" :app="app" :gap-rows="1" :gap-columns="1" />
+      </template>
     </div>
   </div>
 </template>

@@ -44,6 +44,8 @@ const open = ({ openId, draggedId }: OpenProps) => {
   apps.value = desktopAppStore.apps[index.value]
 
   if (draggedId) {
+    const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
+
     if (!apps.value.child || apps.value.child?.value.length === 0) {
       apps.value.child = {
         name: '文件夹',
@@ -58,15 +60,7 @@ const open = ({ openId, draggedId }: OpenProps) => {
       isFolder: false
     })
 
-    // const currentAppIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
-    // const currentApp = desktopAppStore.apps[currentAppIndex]
-    // apps.value.child?.value.push({
-    //   id: currentApp.id,
-    //   title: currentApp.title,
-    //   img: currentApp.img,
-    //   isFolder: false
-    // })
-    // desktopAppStore.apps.splice(currentAppIndex, 1)
+    apps.value.child?.value.push(desktopAppStore.apps[draggedIndex])
   }
 
   nextTick(() => {
