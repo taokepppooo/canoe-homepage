@@ -81,6 +81,9 @@ const onMove = (
   sortablejs: Sortable
 ) => {
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+  if (draggedId !== desktopStore.draggedId) {
+    desktopStore.draggedId = draggedId
+  }
   if (list[relatedIndex].id !== desktopStore.relatedId) {
     desktopStore.relatedId = list[relatedIndex].id
   }
@@ -128,9 +131,6 @@ export const useDesktopSortable = ({
       draggedOffsetY = offsetY
       draggedIndex = evt.oldIndex
       draggedId = list.find((app, i) => i === draggedIndex)?.id || ''
-      if (draggedId !== desktopStore.draggedId) {
-        desktopStore.draggedId = draggedId
-      }
 
       desktopStore.isDragging = true
     },

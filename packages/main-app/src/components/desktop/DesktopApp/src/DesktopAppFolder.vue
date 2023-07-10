@@ -19,7 +19,13 @@ const app: Ref<App> | undefined = inject('app')
 const appModalRef = ref()
 
 const handleClick = () => {
-  appModalRef.value.open({ openId: app?.value.id })
+  // 指定desktopStore.relatedId，用于DesktopAppFolderModal的if判断
+  if (app?.value.id !== desktopStore.relatedId) {
+    desktopStore.relatedId = app?.value.id || ''
+  }
+  nextTick(() => {
+    appModalRef.value.open({ openId: app?.value.id })
+  })
 }
 
 watch(
