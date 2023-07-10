@@ -23,24 +23,23 @@ const handleClick = () => {
 }
 
 watch(
-  () => desktopStore.relatedId,
+  () => desktopStore.dragStatus,
   () => {
-    nextTick(() => {
-      // 目标id与当前id相同，打开文件夹弹窗
-      if (desktopStore.relatedId === app?.value.id) {
+    if (desktopStore.dragStatus === '2' && appModalRef.value) {
+      nextTick(() => {
         appModalRef.value.open({ draggedId: desktopStore.draggedId })
-      }
-    })
-  },
-  {
-    immediate: true
+      })
+    }
   }
 )
 </script>
 
 <template>
   <div :class="ns.b()" @click="handleClick"></div>
-  <DesktopAppFolderModal ref="appModalRef"></DesktopAppFolderModal>
+  <DesktopAppFolderModal
+    v-if="desktopStore.relatedId === app?.id"
+    ref="appModalRef"
+  ></DesktopAppFolderModal>
 </template>
 
 <style lang="less">

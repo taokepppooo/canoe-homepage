@@ -32,6 +32,7 @@ export interface DesktopSortOptions {
   withFolder?: boolean
 }
 
+// 0: 初始化 1: 拖拽 2: 合并文件夹
 type DragStatus = '0' | '1' | '2'
 
 type MoveOriginalEvent = Event & MouseEvent

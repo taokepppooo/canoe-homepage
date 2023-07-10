@@ -4,7 +4,7 @@ import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import type { App, DesktopSortOptions, DragStatus, MoveOriginalEvent } from '@/types/desktop'
+import type { App, DesktopSortOptions, MoveOriginalEvent } from '@/types/desktop'
 import type Sortable from 'sortablejs'
 
 const desktopStore = useDesktopStore()
@@ -35,14 +35,21 @@ let draggedOffsetY = 0
 let draggedIndex = 0
 let relatedIndex = -1
 let timer: NodeJS.Timeout | null = null
-let dragStatus: DragStatus = '0' // 0: 初始化 1: 拖拽 2: 合并文件夹
 let moveX = 0
 let moveY = 0
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
-  if (dragStatus !== '0') return
-  if (list[draggedIndex].isFolder && !withFolder) dragStatus = '1'
+  if (desktopStore.dragStatus !== '0') return
+  if (list[draggedIndex].isFolder && !withFolder) desktopStore.dragStatus = '1'
+  // 拖拽为文件，且目标为文件夹
+  if (!list[draggedIndex].isFolder && list[relatedIndex].isFolder) {
+    nextTick(() => {
+      list[draggedIndex].isShow = false
+      desktopStore.dragStatus = '2'
+    })
+    return
+  }
 
   const { originalEvent, relatedRect } = evt
   const RATIO = 0.6
@@ -50,17 +57,19 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
   const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
   if (intersectionArea > mergeArea) {
-    if (draggedId !== desktopStore.draggedId) {
-      desktopStore.draggedId = draggedId
-    }
     list[relatedIndex].isFolder = true
-    if (list[relatedIndex].id !== desktopStore.relatedId) {
-      desktopStore.relatedId = list[relatedIndex].id
-    }
 
-    dragStatus = '2'
+    // 需要等待folderModal中dom更新完毕
+    nextTick(() => {
+      list[draggedIndex].isShow = false
+      desktopStore.dragStatus = '2'
+    })
   } else {
-    dragStatus = '1'
+    const relatedApp = cloneDeep(list[relatedIndex])
+    list[relatedIndex] = list[draggedIndex]
+    list[draggedIndex] = relatedApp
+
+    desktopStore.dragStatus = '1'
   }
 }
 
@@ -72,6 +81,9 @@ const onMove = (
   sortablejs: Sortable
 ) => {
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+  if (list[relatedIndex].id !== desktopStore.relatedId) {
+    desktopStore.relatedId = list[relatedIndex].id
+  }
 
   // 只有不在同一位置停留时才清除定时器
   if (timer && moveX !== originalEvent.clientX && moveY !== originalEvent.clientY) {
@@ -85,18 +97,13 @@ const onMove = (
       timer = null
       onMoveHandler(evt, list, withFolder)
       sortablejs.options.onMove?.(evt, originalEvent)
-      dragStatus = '0'
+      desktopStore.dragStatus = '0'
     }, DELAY)
   }
 
-  if (dragStatus === '1') {
-    const relatedApp = cloneDeep(list[relatedIndex])
-    list[relatedIndex] = list[draggedIndex]
-    list[draggedIndex] = relatedApp
-
+  if (desktopStore.dragStatus === '1') {
     return true
-  } else if (dragStatus === '2') {
-    list[draggedIndex].isShow = false
+  } else if (desktopStore.dragStatus === '2') {
     return false
   }
 
@@ -121,6 +128,9 @@ export const useDesktopSortable = ({
       draggedOffsetY = offsetY
       draggedIndex = evt.oldIndex
       draggedId = list.find((app, i) => i === draggedIndex)?.id || ''
+      if (draggedId !== desktopStore.draggedId) {
+        desktopStore.draggedId = draggedId
+      }
 
       desktopStore.isDragging = true
     },

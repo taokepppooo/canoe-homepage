@@ -51,14 +51,14 @@ const open = ({ openId, draggedId }: OpenProps) => {
         name: '文件夹',
         value: []
       }
-    }
 
-    apps.value.child?.value.push({
-      id: uuidv4(),
-      title: apps.value.title,
-      img: apps.value.img,
-      isFolder: false
-    })
+      apps.value.child?.value.push({
+        id: uuidv4(),
+        title: apps.value.title,
+        img: apps.value.img,
+        isFolder: false
+      })
+    }
 
     apps.value.child?.value.push(desktopAppStore.apps[draggedIndex])
   }
