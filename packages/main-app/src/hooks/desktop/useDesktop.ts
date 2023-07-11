@@ -1,10 +1,11 @@
-import { multiply, divide } from 'lodash-es'
+import { multiply, cloneDeep } from 'lodash-es'
 import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import type { App, DesktopSortOptions } from '@/types/desktop'
+import type { App, DesktopSortOptions, MoveOriginalEvent } from '@/types/desktop'
+import type Sortable from 'sortablejs'
 
 const desktopStore = useDesktopStore()
 const { appCSSConstant, appSize } = useDesktopGlobal()
@@ -27,153 +28,160 @@ export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: Ap
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
+const DELAY = 1000
+let draggedId = ''
+let draggedOffsetX = 0
+let draggedOffsetY = 0
+let draggedIndex = 0
+let relatedIndex = -1
+let timer: NodeJS.Timeout | null = null
+let moveX = 0
+let moveY = 0
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
+  if (desktopStore.dragStatus !== '0') return
+  if (list[draggedIndex].isFolder && !withFolder) {
+    desktopStore.dragStatus = '1'
+    return
+  }
+
+  const mergeFunc = () => {
+    // 需要等待folderModal中dom更新完毕
+    nextTick(() => {
+      list[draggedIndex].isShow = false
+      desktopStore.dragStatus = '2'
+    })
+  }
+
+  // 拖拽为文件，且目标为文件夹
+  if (!list[draggedIndex].isFolder && list[relatedIndex].isFolder) {
+    mergeFunc()
+    return
+  }
+
+  const { originalEvent, relatedRect } = evt
+  const RATIO = 0.6
+  const mergeArea = relatedRect.width * relatedRect.height * RATIO
+  const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
+
+  if (intersectionArea > mergeArea) {
+    list[relatedIndex].isFolder = true
+
+    mergeFunc()
+  } else {
+    const relatedApp = cloneDeep(list[relatedIndex])
+    list[relatedIndex] = list[draggedIndex]
+    list[draggedIndex] = relatedApp
+
+    desktopStore.dragStatus = '1'
+  }
+}
+
+const onMove = (
+  evt: Sortable.MoveEvent,
+  originalEvent: MoveOriginalEvent,
+  list: App[],
+  withFolder: boolean,
+  sortablejs: Sortable
+) => {
+  relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+  if (draggedId !== desktopStore.draggedId) {
+    desktopStore.draggedId = draggedId
+  }
+  if (list[relatedIndex].id !== desktopStore.relatedId) {
+    desktopStore.relatedId = list[relatedIndex].id
+  }
+
+  const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
+
+  // 只有不在同一位置停留时才清除定时器
+  if (timer && isNotSameLocation) {
+    clearTimeout(timer)
+    timer = null
+    moveX = originalEvent.clientX
+    moveY = originalEvent.clientY
+  }
+  if (!timer) {
+    timer = setTimeout(() => {
+      timer = null
+      onMoveHandler(evt, list, withFolder)
+      sortablejs.options.onMove?.(evt, originalEvent)
+      desktopStore.dragStatus = '0'
+    }, DELAY)
+  }
+
+  if (desktopStore.dragStatus === '1') {
+    return true
+  } else if (desktopStore.dragStatus === '2') {
+    return false
+  }
+
+  return false
+}
+
 export const useDesktopSortable = ({
   element,
   list,
   options,
   withFolder = true
 }: DesktopSortOptions) => {
-  const ContainerWidthToWidthDistance = divide(
-    parseInt(appSize.value.containerWidth) - parseInt(appSize.value.width),
-    2
-  )
-  const ContainerHeightToHeightDistance = divide(
-    parseInt(appSize.value.containerHeight) - parseInt(appSize.value.height),
-    2
-  )
-
-  let draggedId = ''
-  useSortable(element, {
+  const sortablejs = useSortable(element, {
     ...options,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
-      const index = evt.oldIndex
-      draggedId = list.find((app, i) => i === index)?.id || ''
+      const {
+        originalEvent: { offsetX, offsetY }
+      } = evt
+
+      draggedOffsetX = offsetX
+      draggedOffsetY = offsetY
+      draggedIndex = evt.oldIndex
+      draggedId = list.find((app, i) => i === draggedIndex)?.id || ''
 
       desktopStore.isDragging = true
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onMove: (evt: any) => {
-      const {
-        originalEvent: { clientX, clientY },
-        relatedRect
-      } = evt
-      if (
-        clientX > relatedRect.left + ContainerWidthToWidthDistance &&
-        clientX < relatedRect.right - ContainerWidthToWidthDistance &&
-        clientY > relatedRect.top + ContainerHeightToHeightDistance &&
-        clientY < relatedRect.bottom - ContainerHeightToHeightDistance &&
-        withFolder
-      ) {
-        if (draggedId !== desktopStore.draggedId) {
-          desktopStore.draggedId = draggedId
-        }
-
-        dragHover(() => {
-          const relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
-          list[relatedIndex].isFolder = true
-          if (list[relatedIndex].id !== desktopStore.relatedId) {
-            desktopStore.relatedId = list[relatedIndex].id
-          }
-        })
-
-        return false
-      } else {
-        // 排序时会执行定时器中的函数，所以需要在这里清除定时器
-        dragEnd()
-
-        return sort(ContainerWidthToWidthDistance, ContainerHeightToHeightDistance, evt)
-      }
-    },
+    onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
+      onMove(evt, originalEvent, list, withFolder, sortablejs),
     onEnd: () => {
-      dragEnd()
-
       desktopStore.isDragging = false
+      if (timer) {
+        clearTimeout(timer)
+        timer = null
+      }
     }
   })
 }
 
-const sort = (
-  ContainerWidthToWidthDistance: number,
-  ContainerHeightToHeightDistance: number,
+const calculateIntersectionArea = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  evt: any
-) => {
-  const {
-    originalEvent: { clientX, clientY },
-    relatedRect,
-    draggedRect
-  } = evt
-  const gridGapY = parseInt(appCSSConstant.value.gridGapY)
-  const containerWidth = parseInt(appSize.value.containerWidth)
+  originalEvent: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  relatedRect: any
+): number => {
+  const originalClientX = originalEvent.clientX - draggedOffsetX
+  const originalClientY = originalEvent.clientY - draggedOffsetY
+  const relatedX = relatedRect.left
+  const relatedY = relatedRect.top
 
-  const yRelatedScope =
-    clientY > relatedRect.top + ContainerHeightToHeightDistance &&
-    clientY < relatedRect.bottom - ContainerHeightToHeightDistance
+  // 计算两个正方形相交的面积
+  const overlapX = Math.max(
+    0,
+    Math.min(
+      originalClientX + parseInt(appSize.value.width),
+      relatedX + parseInt(appSize.value.width)
+    ) - Math.max(originalClientX, relatedX)
+  )
 
-  const isVerticalCrossing =
-    clientY > draggedRect.bottom + gridGapY + ContainerHeightToHeightDistance ||
-    clientY < draggedRect.top + gridGapY + ContainerHeightToHeightDistance
+  const overlapY = Math.max(
+    0,
+    Math.min(
+      originalClientY + parseInt(appSize.value.height),
+      relatedY + parseInt(appSize.value.height)
+    ) - Math.max(originalClientY, relatedY)
+  )
 
-  const isSameColumn = relatedRect.left === draggedRect.left
+  const intersectionArea = overlapX * overlapY
 
-  const isLeftOfDragged = clientX < draggedRect.left + ContainerWidthToWidthDistance
-  const isRightOfDragged = clientX > draggedRect.right - ContainerWidthToWidthDistance
-  const isTopOfRelatedRect = clientY < relatedRect.top + ContainerHeightToHeightDistance
-  const isBottomRelatedRect = clientY > relatedRect.bottom - ContainerHeightToHeightDistance
-
-  const isInsideHorizontalScopeRight =
-    clientX > relatedRect.right - ContainerWidthToWidthDistance && yRelatedScope
-  const isInsideHorizontalScopeLeft =
-    clientX < relatedRect.left + ContainerWidthToWidthDistance && yRelatedScope
-
-  const isRightMove = clientX > draggedRect.right
-  const isLeftMove = clientX < draggedRect.left + containerWidth
-
-  const horizontalMove = () => {
-    if (isRightMove && isInsideHorizontalScopeRight) {
-      return true
-    }
-    if (isLeftMove && isInsideHorizontalScopeLeft) {
-      return true
-    }
-
-    return false
-  }
-
-  if (isVerticalCrossing) {
-    if (isSameColumn) {
-      const isVerticalTopMove =
-        clientY < draggedRect.top &&
-        clientX > relatedRect.left + ContainerWidthToWidthDistance &&
-        clientX < relatedRect.right - ContainerWidthToWidthDistance
-      return isVerticalTopMove
-        ? isTopOfRelatedRect
-        : isBottomRelatedRect || isLeftOfDragged || isRightOfDragged
-    } else {
-      return horizontalMove()
-    }
-  } else {
-    return horizontalMove()
-  }
-}
-
-let moveTime: NodeJS.Timeout
-let lastMoveTime: number
-const MERGE_TIME = 700
-const dragHover = (fn: () => void) => {
-  if (!lastMoveTime) {
-    lastMoveTime = Date.now()
-  }
-
-  if (Date.now() - lastMoveTime > MERGE_TIME) {
-    dragEnd()
-    lastMoveTime = 0
-    moveTime = setTimeout(() => {
-      fn()
-    }, MERGE_TIME)
-  }
-}
-const dragEnd = () => {
-  clearTimeout(moveTime)
+  return intersectionArea
 }

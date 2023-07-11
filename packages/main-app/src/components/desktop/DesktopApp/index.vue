@@ -44,8 +44,8 @@ provide('app', app)
 .@{ns} {
   grid-row: span v-bind(desktopGapRows);
   grid-column: span v-bind(desktopGColumns);
-  width: v-bind('size.containerWidth');
-  height: v-bind('size.containerHeight');
+  width: v-bind('size.width');
+  height: v-bind('size.height');
   position: relative;
 
   &-wrapper {

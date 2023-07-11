@@ -5,8 +5,6 @@ export interface AppCSSConstant {
 }
 
 export interface AppSize {
-  containerWidth: string
-  containerHeight: string
   width: string
   height: string
 }
@@ -23,6 +21,7 @@ export interface App {
   isFolder: boolean
   child?: ChildApp
   appDragIndex?: number
+  isShow: boolean // 是否显示 处理合并时如果采用splice删除元素导致拖拽元素不存在的问题
 }
 
 export interface DesktopSortOptions {
@@ -32,3 +31,8 @@ export interface DesktopSortOptions {
   options?: any
   withFolder?: boolean
 }
+
+// 0: 初始化 1: 拖拽 2: 合并文件夹
+type DragStatus = '0' | '1' | '2'
+
+type MoveOriginalEvent = Event & MouseEvent

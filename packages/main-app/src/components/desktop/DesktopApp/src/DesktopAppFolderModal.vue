@@ -4,10 +4,17 @@ import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopSortable } from '@/hooks/desktop/useDesktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
+import { useDesktopAppStore } from '@/stores/desktopApp'
+
+interface OpenProps {
+  openId?: string
+  draggedId?: string
+}
 
 const ns = useNamespace('desktop-folder-modal')
 const { appCSSConstant, appSize } = useDesktopGlobal()
 const desktopStore = useDesktopStore()
+const desktopAppStore = useDesktopAppStore()
 
 const desktopRef = ref()
 const appsRef = ref()
@@ -28,105 +35,52 @@ watch(
   }
 )
 
-const open = (id?: string) => {
+const open = ({ openId, draggedId }: OpenProps) => {
   visible.value = true
   // id存在，说明是从文件夹打开的
-  index.value = desktopStore.apps.findIndex((item) => item.id === (id || desktopStore.relatedId))
-  apps.value = desktopStore.apps[index.value]
+  index.value = desktopAppStore.apps.findIndex(
+    (item) => item.id === (openId || desktopStore.relatedId)
+  )
+  apps.value = desktopAppStore.apps[index.value]
 
-  if (index.value !== -1) {
+  if (draggedId) {
+    const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
+
     if (!apps.value.child || apps.value.child?.value.length === 0) {
       apps.value.child = {
         name: '文件夹',
         value: []
       }
+
       apps.value.child?.value.push({
         id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
-        img: apps.value.img,
-        isFolder: false
-      })
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        title: uuidv4(),
+        title: apps.value.title,
         img: apps.value.img,
         isFolder: false
       })
     }
 
-    nextTick(() => {
-      const element = appsRef.value
-
-      useDesktopSortable({
-        element,
-        list: apps.value.child?.value,
-        options: {
-          group: 'desktop'
-        },
-        withFolder: false
-      })
-    })
+    apps.value.child?.value.push(desktopAppStore.apps[draggedIndex])
   }
+
+  nextTick(() => {
+    const element = appsRef.value
+
+    useDesktopSortable({
+      element,
+      list: apps.value.child?.value,
+      options: {
+        group: 'desktop'
+      },
+      withFolder: false
+    })
+  })
 }
 
 const gridStyles = ref({
   display: 'grid',
-  'grid-template-columns': `repeat(auto-fill, ${appSize.value.containerWidth})`,
-  'grid-template-rows': `repeat(auto-fill, ${appSize.value.containerHeight})`,
+  'grid-template-columns': `repeat(auto-fill, ${appSize.value.width})`,
+  'grid-template-rows': `repeat(auto-fill, ${appSize.value.height})`,
   'grid-gap': `${appCSSConstant.value.gridGapY} ${appCSSConstant.value.gridGapX}`
 })
 
