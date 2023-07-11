@@ -44,6 +44,7 @@ const open = ({ openId, draggedId }: OpenProps) => {
   apps.value = desktopAppStore.apps[index.value]
 
   if (draggedId) {
+    console.log('open')
     const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
 
     if (!apps.value.child || apps.value.child?.value.length === 0) {

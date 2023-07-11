@@ -28,7 +28,7 @@ export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: Ap
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
-const DELAY = 1000
+const DELAY = 500
 let draggedId = ''
 let draggedOffsetX = 0
 let draggedOffsetY = 0
@@ -47,9 +47,8 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
   }
 
   const mergeFunc = () => {
-    // 需要等待folderModal中dom更新完毕
+    list[draggedIndex].isShow = false
     nextTick(() => {
-      list[draggedIndex].isShow = false
       desktopStore.dragStatus = '2'
     })
   }
@@ -70,10 +69,6 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
 
     mergeFunc()
   } else {
-    const relatedApp = cloneDeep(list[relatedIndex])
-    list[relatedIndex] = list[draggedIndex]
-    list[draggedIndex] = relatedApp
-
     desktopStore.dragStatus = '1'
   }
 }
@@ -82,8 +77,7 @@ const onMove = (
   evt: Sortable.MoveEvent,
   originalEvent: MoveOriginalEvent,
   list: App[],
-  withFolder: boolean,
-  sortablejs: Sortable
+  withFolder: boolean
 ) => {
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
   if (draggedId !== desktopStore.draggedId) {
@@ -95,7 +89,6 @@ const onMove = (
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
 
-  // 只有不在同一位置停留时才清除定时器
   if (timer && isNotSameLocation) {
     clearTimeout(timer)
     timer = null
@@ -104,20 +97,13 @@ const onMove = (
   }
   if (!timer) {
     timer = setTimeout(() => {
-      timer = null
       onMoveHandler(evt, list, withFolder)
-      sortablejs.options.onMove?.(evt, originalEvent)
-      desktopStore.dragStatus = '0'
     }, DELAY)
   }
 
-  if (desktopStore.dragStatus === '1') {
-    return true
-  } else if (desktopStore.dragStatus === '2') {
+  if (desktopStore.dragStatus !== '1') {
     return false
   }
-
-  return false
 }
 
 export const useDesktopSortable = ({
@@ -126,8 +112,10 @@ export const useDesktopSortable = ({
   options,
   withFolder = true
 }: DesktopSortOptions) => {
-  const sortablejs = useSortable(element, {
+  useSortable(element, {
     ...options,
+    forceFallback: false,
+    sort: true,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
       const {
@@ -142,9 +130,15 @@ export const useDesktopSortable = ({
       desktopStore.isDragging = true
     },
     onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
-      onMove(evt, originalEvent, list, withFolder, sortablejs),
+      onMove(evt, originalEvent, list, withFolder),
     onEnd: () => {
       desktopStore.isDragging = false
+      if (desktopStore.dragStatus === '1') {
+        const relatedApp = cloneDeep(list[relatedIndex])
+        list[relatedIndex] = list[draggedIndex]
+        list[draggedIndex] = relatedApp
+      }
+      desktopStore.dragStatus = '0'
       if (timer) {
         clearTimeout(timer)
         timer = null
