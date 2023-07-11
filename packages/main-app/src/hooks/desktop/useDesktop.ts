@@ -41,13 +41,22 @@ let moveY = 0
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
   if (desktopStore.dragStatus !== '0') return
-  if (list[draggedIndex].isFolder && !withFolder) desktopStore.dragStatus = '1'
-  // 拖拽为文件，且目标为文件夹
-  if (!list[draggedIndex].isFolder && list[relatedIndex].isFolder) {
+  if (list[draggedIndex].isFolder && !withFolder) {
+    desktopStore.dragStatus = '1'
+    return
+  }
+
+  const mergeFunc = () => {
+    // 需要等待folderModal中dom更新完毕
     nextTick(() => {
       list[draggedIndex].isShow = false
       desktopStore.dragStatus = '2'
     })
+  }
+
+  // 拖拽为文件，且目标为文件夹
+  if (!list[draggedIndex].isFolder && list[relatedIndex].isFolder) {
+    mergeFunc()
     return
   }
 
@@ -59,11 +68,7 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
   if (intersectionArea > mergeArea) {
     list[relatedIndex].isFolder = true
 
-    // 需要等待folderModal中dom更新完毕
-    nextTick(() => {
-      list[draggedIndex].isShow = false
-      desktopStore.dragStatus = '2'
-    })
+    mergeFunc()
   } else {
     const relatedApp = cloneDeep(list[relatedIndex])
     list[relatedIndex] = list[draggedIndex]
@@ -88,8 +93,10 @@ const onMove = (
     desktopStore.relatedId = list[relatedIndex].id
   }
 
+  const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
+
   // 只有不在同一位置停留时才清除定时器
-  if (timer && moveX !== originalEvent.clientX && moveY !== originalEvent.clientY) {
+  if (timer && isNotSameLocation) {
     clearTimeout(timer)
     timer = null
     moveX = originalEvent.clientX

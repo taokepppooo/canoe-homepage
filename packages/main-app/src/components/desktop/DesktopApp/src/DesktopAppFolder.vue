@@ -32,9 +32,7 @@ watch(
   () => desktopStore.dragStatus,
   () => {
     if (desktopStore.dragStatus === '2' && appModalRef.value) {
-      nextTick(() => {
-        appModalRef.value.open({ draggedId: desktopStore.draggedId })
-      })
+      appModalRef.value.open({ draggedId: desktopStore.draggedId })
     }
   }
 )
