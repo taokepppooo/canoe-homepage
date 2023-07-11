@@ -28,7 +28,7 @@ export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: Ap
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
-const DELAY = 500
+const DELAY = 700
 let draggedId = ''
 let draggedOffsetX = 0
 let draggedOffsetY = 0
@@ -54,9 +54,15 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
   }
 
   // 拖拽为文件，且目标为文件夹
-  if (!list[draggedIndex].isFolder && list[relatedIndex].isFolder) {
-    mergeFunc()
-    return
+  if (list[relatedIndex].isFolder) {
+    // 拖拽为文件，且目标为文件夹
+    if (!list[draggedIndex].isFolder) {
+      mergeFunc()
+      return
+    } else {
+      desktopStore.dragStatus = '1'
+      return
+    }
   }
 
   const { originalEvent, relatedRect } = evt
