@@ -42,9 +42,9 @@ const open = ({ openId, draggedId }: OpenProps) => {
     (item) => item.id === (openId || desktopStore.relatedId)
   )
   apps.value = desktopAppStore.apps[index.value]
+  desktopStore.openFolderIndex = index.value
 
   if (draggedId) {
-    console.log('open')
     const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
 
     if (!apps.value.child || apps.value.child?.value.length === 0) {
@@ -55,13 +55,14 @@ const open = ({ openId, draggedId }: OpenProps) => {
 
       apps.value.child?.value.push({
         id: uuidv4(),
+        parentId: apps.value.id,
         title: apps.value.title,
         img: apps.value.img,
         isFolder: false
       })
     }
 
-    apps.value.child?.value.push(desktopAppStore.apps[draggedIndex])
+    apps.value.child?.value.push({ parentId: apps.value.id, ...desktopAppStore.apps[draggedIndex] })
   }
 
   nextTick(() => {
