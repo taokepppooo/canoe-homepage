@@ -62,8 +62,14 @@ const open = ({ openId, draggedId }: OpenProps) => {
       })
     }
 
-    apps.value.child?.value.push({ parentId: apps.value.id, ...desktopAppStore.apps[draggedIndex] })
+    apps.value.child?.value.push({
+      parentId: apps.value.id,
+      ...desktopAppStore.apps[draggedIndex],
+      id: uuidv4()
+    })
   }
+
+  apps.value.title = '文件夹'
 
   nextTick(() => {
     const element = appsRef.value

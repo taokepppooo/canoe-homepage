@@ -141,13 +141,17 @@ export const useDesktopSortable = ({
       draggedOffsetX = offsetX
       draggedOffsetY = offsetY
       draggedIndex = evt.oldIndex
-      draggedId = list.find((app, i) => i === draggedIndex)?.id || ''
+      console.log(draggedIndex, 'draggedIndex')
+      console.log(list, 'list')
+      console.log(desktopAppStore.apps[draggedIndex], 'desktopAppStore.apps[draggedIndex]')
+      console.log(draggedId, 'draggedId')
+      draggedId = list[draggedIndex].id || ''
 
       desktopStore.isDragging = true
     },
     onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
       onMove(evt, originalEvent, list, withFolder),
-    onEnd: (evt: Sortable.MoveEvent) => {
+    onEnd: (evt: Sortable.SortableEvent) => {
       desktopStore.isDragging = false
       if (desktopStore.dragStatus === '1') {
         if (evt.from.className === evt.to.className && list[relatedIndex].parentId) {
@@ -168,16 +172,16 @@ export const useDesktopSortable = ({
           delete list[draggedIndex].parentId
           list[draggedIndex].isShow = true
 
-          desktopAppStore.apps.splice(relatedIndex, 0, list[draggedIndex])
+          // TODO 优化顺序判断
+          desktopAppStore.apps.splice(relatedIndex + 1, 0, list[draggedIndex])
           list.splice(draggedIndex, 1)
+          // evt.to.removeChild(evt.item)
         } else {
           const relatedApp = cloneDeep(list[relatedIndex])
           list[relatedIndex] = list[draggedIndex]
           list[draggedIndex] = relatedApp
         }
       }
-      console.log(desktopAppStore.apps, 'desktopAppStore.apps')
-
       desktopAppStore.apps = desktopAppStore.apps.filter((app) => app.isShow)
       desktopStore.dragStatus = '0'
 
