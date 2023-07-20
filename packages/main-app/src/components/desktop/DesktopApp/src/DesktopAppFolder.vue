@@ -16,7 +16,8 @@ const props = defineProps<{
 
 const { width, height } = toRefs(props)
 const app: Ref<App> | undefined = inject('app')
-const appModalRef = ref()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const appModalRef = ref<{ [key: string]: any }>({})
 
 const handleClick = () => {
   // 指定desktopStore.relatedId，用于DesktopAppFolderModal的if判断
@@ -24,15 +25,19 @@ const handleClick = () => {
     desktopStore.relatedId = app?.value.id || ''
   }
   nextTick(() => {
-    appModalRef.value.open({ openId: app?.value.id })
+    app?.value.id && appModalRef.value[app?.value.id].open({ openId: app?.value.id })
   })
 }
 
 watch(
   () => desktopStore.dragStatus,
   () => {
-    if (desktopStore.dragStatus === '2' && appModalRef.value) {
-      appModalRef.value.open({ draggedId: desktopStore.draggedId })
+    if (
+      desktopStore.dragStatus === '2' &&
+      appModalRef.value &&
+      desktopStore.relatedId === app?.value.id
+    ) {
+      app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.draggedId })
     }
   }
 )
@@ -41,8 +46,7 @@ watch(
 <template>
   <div :class="ns.b()" @click="handleClick"></div>
   <DesktopAppFolderModal
-    v-if="desktopStore.relatedId === app?.id"
-    ref="appModalRef"
+    :ref="(el: HTMLElement) => (appModalRef[app!.id] = el)"
   ></DesktopAppFolderModal>
 </template>
 

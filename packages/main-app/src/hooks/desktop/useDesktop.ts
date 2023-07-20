@@ -3,11 +3,14 @@ import { calcElementWidth } from '@/utils/dom'
 import { useLayoutStore } from '@/stores/layout'
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
+import { useDesktopAppStore } from '@/stores/desktopApp'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
+import { defaultNamespace } from '@/hooks/useNamespace'
 import type { App, DesktopSortOptions, MoveOriginalEvent } from '@/types/desktop'
 import type Sortable from 'sortablejs'
 
 const desktopStore = useDesktopStore()
+const desktopAppStore = useDesktopAppStore()
 const { appCSSConstant, appSize } = useDesktopGlobal()
 
 export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: App[]) => {
@@ -28,7 +31,7 @@ export const useDesktop = (desktopHeight: Ref<string>, desktopRef: Ref, apps: Ap
   apps.splice(multiply(horizontalAppTotal, verticalAppTotal), apps.length)
 }
 
-const DELAY = 1000
+const DELAY = 700
 let draggedId = ''
 let draggedOffsetX = 0
 let draggedOffsetY = 0
@@ -39,29 +42,34 @@ let moveX = 0
 let moveY = 0
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
+const onMoveHandler = (evt: any, list: App[]) => {
   if (desktopStore.dragStatus !== '0') return
-  if (list[draggedIndex].isFolder && !withFolder) {
+  if (list[draggedIndex].isFolder) {
     desktopStore.dragStatus = '1'
     return
   }
 
   const mergeFunc = () => {
-    // 需要等待folderModal中dom更新完毕
+    list[draggedIndex].isShow = false
     nextTick(() => {
-      list[draggedIndex].isShow = false
       desktopStore.dragStatus = '2'
     })
   }
 
-  // 拖拽为文件，且目标为文件夹
-  if (!list[draggedIndex].isFolder && list[relatedIndex].isFolder) {
-    mergeFunc()
-    return
+  // 目标为文件夹
+  if (list[relatedIndex].isFolder) {
+    // 拖拽为文件
+    if (!list[draggedIndex].isFolder) {
+      mergeFunc()
+      return
+    } else {
+      desktopStore.dragStatus = '1'
+      return
+    }
   }
 
   const { originalEvent, relatedRect } = evt
-  const RATIO = 0.6
+  const RATIO = 0.5
   const mergeArea = relatedRect.width * relatedRect.height * RATIO
   const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
@@ -70,10 +78,6 @@ const onMoveHandler = (evt: any, list: App[], withFolder: boolean) => {
 
     mergeFunc()
   } else {
-    const relatedApp = cloneDeep(list[relatedIndex])
-    list[relatedIndex] = list[draggedIndex]
-    list[draggedIndex] = relatedApp
-
     desktopStore.dragStatus = '1'
   }
 }
@@ -82,20 +86,21 @@ const onMove = (
   evt: Sortable.MoveEvent,
   originalEvent: MoveOriginalEvent,
   list: App[],
-  withFolder: boolean,
-  sortablejs: Sortable
+  withFolder: boolean
 ) => {
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
-  if (draggedId !== desktopStore.draggedId) {
-    desktopStore.draggedId = draggedId
+
+  if (!withFolder) {
+    desktopStore.dragStatus = '1'
+    return true
   }
+
   if (list[relatedIndex].id !== desktopStore.relatedId) {
     desktopStore.relatedId = list[relatedIndex].id
   }
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
 
-  // 只有不在同一位置停留时才清除定时器
   if (timer && isNotSameLocation) {
     clearTimeout(timer)
     timer = null
@@ -104,30 +109,26 @@ const onMove = (
   }
   if (!timer) {
     timer = setTimeout(() => {
-      timer = null
-      onMoveHandler(evt, list, withFolder)
-      sortablejs.options.onMove?.(evt, originalEvent)
-      desktopStore.dragStatus = '0'
+      onMoveHandler(evt, list)
     }, DELAY)
   }
 
-  if (desktopStore.dragStatus === '1') {
-    return true
-  } else if (desktopStore.dragStatus === '2') {
+  if (desktopStore.dragStatus !== '1') {
     return false
   }
-
-  return false
 }
 
+// 只适用于首页桌面和首页桌面文件夹内的拖拽
 export const useDesktopSortable = ({
   element,
   list,
   options,
   withFolder = true
 }: DesktopSortOptions) => {
-  const sortablejs = useSortable(element, {
+  useSortable(element, {
     ...options,
+    forceFallback: false,
+    sort: true,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onStart: (evt: any) => {
       const {
@@ -137,14 +138,52 @@ export const useDesktopSortable = ({
       draggedOffsetX = offsetX
       draggedOffsetY = offsetY
       draggedIndex = evt.oldIndex
-      draggedId = list.find((app, i) => i === draggedIndex)?.id || ''
-
+      // 解决拖拽文件夹内到外时，list未更新导致的bug
+      if (!list[draggedIndex].parentId) {
+        list = desktopAppStore.apps
+      }
+      draggedId = list[draggedIndex].id || ''
+      if (draggedId !== desktopStore.draggedId) {
+        desktopStore.draggedId = draggedId
+      }
       desktopStore.isDragging = true
     },
     onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
-      onMove(evt, originalEvent, list, withFolder, sortablejs),
-    onEnd: () => {
+      onMove(evt, originalEvent, list, withFolder),
+    onEnd: (evt: Sortable.SortableEvent) => {
       desktopStore.isDragging = false
+      if (desktopStore.dragStatus === '1') {
+        if (evt.from.className === evt.to.className && list[relatedIndex].parentId) {
+          const index = desktopAppStore.apps.findIndex(
+            (app) => app.isShow && app.id === list[relatedIndex].parentId
+          )
+          // 弹窗内拖拽
+          const child = desktopAppStore.apps[index].child?.value || []
+          const relatedApp = cloneDeep(child[relatedIndex])
+          child[relatedIndex] = child[draggedIndex]
+          child[draggedIndex] = relatedApp
+        } else if (
+          list[draggedIndex].parentId &&
+          evt.from.className === `${defaultNamespace}-desktop-folder-modal-body__desktop__apps` &&
+          evt.to.className === `${defaultNamespace}-desktop__apps`
+        ) {
+          // 弹窗内拖拽到谈窗外
+          delete list[draggedIndex].parentId
+          list[draggedIndex].isShow = true
+
+          evt.newIndex && desktopAppStore.apps.splice(evt.newIndex, 0, list[draggedIndex])
+          list.splice(draggedIndex, 1)
+          // 解决拖拽文件夹内到外时，会有dom残留的bug
+          evt.to.removeChild(evt.item)
+        } else {
+          const relatedApp = cloneDeep(list[relatedIndex])
+          list[relatedIndex] = list[draggedIndex]
+          list[draggedIndex] = relatedApp
+        }
+      }
+      desktopAppStore.apps = desktopAppStore.apps.filter((app) => app.isShow)
+      desktopStore.dragStatus = '0'
+
       if (timer) {
         clearTimeout(timer)
         timer = null

@@ -13,18 +13,18 @@ const desktopHeight = ref('auto')
 const desktopAppStore = useDesktopAppStore()
 const desktopRef = ref()
 
-// TODO: 替换数据
-for (let i = 0; i < 100; i++) {
-  desktopAppStore.apps.push({
-    id: uuidv4(),
-    title: `${i}`,
-    img: 'https://files.codelife.cc/icons/guide.svg',
-    isFolder: false,
-    isShow: true
-  })
-}
+onMounted(() => {
+  // TODO: 替换数据
+  for (let i = 0; i < 100; i++) {
+    desktopAppStore.apps.push({
+      id: uuidv4(),
+      title: `${i}`,
+      img: 'https://files.codelife.cc/icons/guide.svg',
+      isFolder: false,
+      isShow: true
+    })
+  }
 
-nextTick(() => {
   const element = appsRef.value
 
   useDesktopSortable({

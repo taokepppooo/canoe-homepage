@@ -20,6 +20,7 @@ export interface App {
   img: string
   isFolder: boolean
   child?: ChildApp
+  parentId?: string
   appDragIndex?: number
   isShow: boolean // 是否显示 处理合并时如果采用splice删除元素导致拖拽元素不存在的问题
 }
