@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from 'uuid'
+import { debounce } from 'lodash-es'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopSortable } from '@/hooks/desktop/useDesktop'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
+import type { App } from '@/types/desktop'
 
 interface OpenProps {
   openId?: string
@@ -35,33 +37,61 @@ watch(
   }
 )
 
+const createChildFolder = (app: App, isFolder = false) => {
+  if (!app.child) {
+    app.child = {
+      name: '文件夹',
+      value: []
+    }
+
+    app.child.value.push({
+      id: uuidv4(),
+      parentId: app.id,
+      title: app.title,
+      img: app.img,
+      isFolder,
+      isShow: true
+    })
+  }
+}
+
+const setupSortable = (app: App) => {
+  nextTick(() => {
+    const element = appsRef.value
+
+    app.child &&
+      useDesktopSortable({
+        element,
+        list: app.child?.value,
+        options: {
+          group: 'desktop'
+        },
+        withFolder: false
+      })
+  })
+}
+
 const open = ({ openId, draggedId }: OpenProps) => {
   visible.value = true
-  // id存在，说明是从文件夹打开的
-  index.value = desktopAppStore.apps.findIndex(
-    (item) => item.id === (openId || desktopStore.relatedId)
-  )
-  apps.value = desktopAppStore.apps[index.value]
+  if (draggedId) {
+    // draggedId存在，拖拽触发打开
+    index.value = desktopAppStore.apps
+      .filter((item) => item.isShow)
+      .findIndex((item) => item.id === desktopStore.relatedId)
+    const relatedIndex = desktopAppStore.apps.findIndex(
+      (item) => item.id === desktopStore.relatedId
+    )
+    apps.value = desktopAppStore.apps[relatedIndex]
+  } else {
+    // openId存在，说明是手动触发打开
+    index.value = desktopAppStore.apps.findIndex((item) => item.id === openId)
+    apps.value = desktopAppStore.apps[index.value]
+  }
   desktopStore.openFolderIndex = index.value
 
   if (draggedId) {
     const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
-
-    if (!apps.value.child || apps.value.child?.value.length === 0) {
-      apps.value.child = {
-        name: '文件夹',
-        value: []
-      }
-
-      apps.value.child?.value.push({
-        id: uuidv4(),
-        parentId: apps.value.id,
-        title: apps.value.title,
-        img: apps.value.img,
-        isFolder: false
-      })
-    }
-
+    createChildFolder(apps.value)
     apps.value.child?.value.push({
       parentId: apps.value.id,
       ...desktopAppStore.apps[draggedIndex],
@@ -69,21 +99,18 @@ const open = ({ openId, draggedId }: OpenProps) => {
     })
   }
 
-  apps.value.title = '文件夹'
+  apps.value.title = apps.value.child.name
 
-  nextTick(() => {
-    const element = appsRef.value
-
-    useDesktopSortable({
-      element,
-      list: apps.value.child?.value,
-      options: {
-        group: 'desktop'
-      },
-      withFolder: false
-    })
-  })
+  setupSortable(apps.value)
 }
+
+const folderNameInput = (e: Event) => {
+  const app = reactive(desktopAppStore.apps[index.value])
+  app.child &&
+    (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
+}
+
+const debounceFolderNameInput = debounce(folderNameInput, 300)
 
 const gridStyles = ref({
   display: 'grid',
@@ -110,7 +137,11 @@ defineExpose({
   >
     <template #header>
       <div :class="ns.b('header')">
-        <input :value="apps.child?.name" :class="ns.be('header', 'title')" />
+        <input
+          :value="apps.child?.name"
+          :class="ns.be('header', 'title')"
+          @input="debounceFolderNameInput"
+        />
       </div>
     </template>
     <div ref="bodyRef" :class="ns.b('body')">

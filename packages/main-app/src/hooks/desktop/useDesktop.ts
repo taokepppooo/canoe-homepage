@@ -90,10 +90,6 @@ const onMove = (
 ) => {
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
 
-  if (draggedId !== desktopStore.draggedId) {
-    desktopStore.draggedId = draggedId
-  }
-
   if (!withFolder) {
     desktopStore.dragStatus = '1'
     return true
@@ -122,6 +118,7 @@ const onMove = (
   }
 }
 
+// 只适用于首页桌面和首页桌面文件夹内的拖拽
 export const useDesktopSortable = ({
   element,
   list,
@@ -141,12 +138,14 @@ export const useDesktopSortable = ({
       draggedOffsetX = offsetX
       draggedOffsetY = offsetY
       draggedIndex = evt.oldIndex
-      console.log(draggedIndex, 'draggedIndex')
-      console.log(list, 'list')
-      console.log(desktopAppStore.apps[draggedIndex], 'desktopAppStore.apps[draggedIndex]')
-      console.log(draggedId, 'draggedId')
+      // 解决拖拽文件夹内到外时，list未更新导致的bug
+      if (!list[draggedIndex].parentId) {
+        list = desktopAppStore.apps
+      }
       draggedId = list[draggedIndex].id || ''
-
+      if (draggedId !== desktopStore.draggedId) {
+        desktopStore.draggedId = draggedId
+      }
       desktopStore.isDragging = true
     },
     onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
@@ -172,10 +171,10 @@ export const useDesktopSortable = ({
           delete list[draggedIndex].parentId
           list[draggedIndex].isShow = true
 
-          // TODO 优化顺序判断
-          desktopAppStore.apps.splice(relatedIndex + 1, 0, list[draggedIndex])
+          evt.newIndex && desktopAppStore.apps.splice(evt.newIndex, 0, list[draggedIndex])
           list.splice(draggedIndex, 1)
-          // evt.to.removeChild(evt.item)
+          // 解决拖拽文件夹内到外时，会有dom残留的bug
+          evt.to.removeChild(evt.item)
         } else {
           const relatedApp = cloneDeep(list[relatedIndex])
           list[relatedIndex] = list[draggedIndex]
