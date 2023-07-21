@@ -2,7 +2,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
-import { useDesktop, useDesktopSortable } from '@/hooks/desktop/useDesktop'
+import { useDesktop } from '@/hooks/desktop/useDesktop'
+import { useDesktopSortable } from '@/hooks/desktop/useDesktopSortable'
 import { useDesktopAppStore } from '@/stores/desktopApp'
 
 const ns = useNamespace('desktop')
