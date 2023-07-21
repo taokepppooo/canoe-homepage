@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { debounce } from 'lodash-es'
 import { useNamespace } from '@/hooks/useNamespace'
-import { useDesktopSortable } from '@/hooks/desktop/useDesktop'
+import { useDesktopSortable } from '@/hooks/desktop/useDesktopSortable'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
