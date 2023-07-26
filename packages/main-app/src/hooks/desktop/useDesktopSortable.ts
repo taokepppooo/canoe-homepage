@@ -104,67 +104,74 @@ export const useDesktopSortable = ({
   options,
   withFolder = true
 }: DesktopSortOptions) => {
-  useSortable(element, {
-    ...options,
-    forceFallback: false,
-    sort: true,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onStart: (evt: any) => {
-      const {
-        originalEvent: { offsetX, offsetY }
-      } = evt
+  const index = desktopAppStore.desktopList.findIndex(
+    (desktop) => desktop.id === desktopStore.currentDesktopId
+  )
 
-      draggedOffsetX = offsetX
-      draggedOffsetY = offsetY
-      draggedIndex = evt.oldIndex
-      // 解决拖拽文件夹内到外时，list未更新导致的bug
-      if (!list[draggedIndex].parentId) {
-        list = desktopAppStore.apps
-      }
-      draggedId = list[draggedIndex].id || ''
-      if (draggedId !== desktopStore.draggedId) {
-        desktopStore.draggedId = draggedId
-      }
-      desktopStore.isDragging = true
-    },
-    onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
-      onMove(evt, originalEvent, list, withFolder),
-    onEnd: (evt: Sortable.SortableEvent) => {
-      desktopStore.isDragging = false
-      if (desktopStore.dragStatus === '1') {
-        if (evt.from.className === evt.to.className && list[relatedIndex].parentId) {
-          const index = desktopAppStore.apps.findIndex(
-            (app) => app.isShow && app.id === list[relatedIndex].parentId
-          )
-          // 弹窗内拖拽
-          const child = desktopAppStore.apps[index].child?.value || []
-          ;[child[relatedIndex], child[draggedIndex]] = [child[draggedIndex], child[relatedIndex]]
-        } else if (
-          list[draggedIndex].parentId &&
-          evt.from.className === `${defaultNamespace}-desktop-folder-modal-body__desktop__apps` &&
-          evt.to.className === `${defaultNamespace}-desktop__apps`
-        ) {
-          // 弹窗内拖拽到谈窗外
-          delete list[draggedIndex].parentId
-          list[draggedIndex].isShow = true
+  if (index >= 0) {
+    const desktop = desktopAppStore.desktopList[index]
+    useSortable(element, {
+      ...options,
+      forceFallback: false,
+      sort: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onStart: (evt: any) => {
+        const {
+          originalEvent: { offsetX, offsetY }
+        } = evt
 
-          evt.newIndex && desktopAppStore.apps.splice(evt.newIndex, 0, list[draggedIndex])
-          list.splice(draggedIndex, 1)
-          // 解决拖拽文件夹内到外时，会有dom残留的bug
-          evt.to.removeChild(evt.item)
-        } else {
-          ;[list[relatedIndex], list[draggedIndex]] = [list[draggedIndex], list[relatedIndex]]
+        draggedOffsetX = offsetX
+        draggedOffsetY = offsetY
+        draggedIndex = evt.oldIndex
+        // 解决拖拽文件夹内到外时，list未更新导致的bug
+        if (!list[draggedIndex].parentId) {
+          list = desktop.child
+        }
+        draggedId = list[draggedIndex].id || ''
+        if (draggedId !== desktopStore.draggedId) {
+          desktopStore.draggedId = draggedId
+        }
+        desktopStore.isDragging = true
+      },
+      onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
+        onMove(evt, originalEvent, list, withFolder),
+      onEnd: (evt: Sortable.SortableEvent) => {
+        desktopStore.isDragging = false
+        if (desktopStore.dragStatus === '1') {
+          if (evt.from.className === evt.to.className && list[relatedIndex].parentId) {
+            const index = desktop.child.findIndex(
+              (app) => app.isShow && app.id === list[relatedIndex].parentId
+            )
+            // 弹窗内拖拽
+            const apps = desktop.child[index].child?.value || []
+            ;[apps[relatedIndex], apps[draggedIndex]] = [apps[draggedIndex], apps[relatedIndex]]
+          } else if (
+            list[draggedIndex].parentId &&
+            evt.from.className === `${defaultNamespace}-desktop-folder-modal-body__desktop__apps` &&
+            evt.to.className === `${defaultNamespace}-desktop-controller__apps`
+          ) {
+            // 弹窗内拖拽到谈窗外
+            delete list[draggedIndex].parentId
+            list[draggedIndex].isShow = true
+
+            evt.newIndex && desktop.child.splice(evt.newIndex, 0, list[draggedIndex])
+            list.splice(draggedIndex, 1)
+            // 解决拖拽文件夹内到外时，会有dom残留的bug
+            evt.to.removeChild(evt.item)
+          } else {
+            ;[list[relatedIndex], list[draggedIndex]] = [list[draggedIndex], list[relatedIndex]]
+          }
+        }
+        desktop.child = desktop.child.filter((app) => app.isShow)
+        desktopStore.dragStatus = '0'
+
+        if (timer) {
+          clearTimeout(timer)
+          timer = null
         }
       }
-      desktopAppStore.apps = desktopAppStore.apps.filter((app) => app.isShow)
-      desktopStore.dragStatus = '0'
-
-      if (timer) {
-        clearTimeout(timer)
-        timer = null
-      }
-    }
-  })
+    })
+  }
 }
 
 const calculateIntersectionArea = (

@@ -1,22 +1,29 @@
 import { debounce } from 'lodash-es'
-import type { App } from '@/types/desktop'
+import { createLocalStorage } from '@/utils/cache'
+import { Cache } from '@/types/enum'
+import type { Desktop } from '@/types/desktop'
 
 export const useDesktopAppStore = defineStore('desktopApp', {
   state: (): State => ({
-    apps: []
+    desktopList: []
   })
 })
 
 interface State {
-  apps: App[]
+  desktopList: Desktop[]
 }
 
-useDesktopAppStore().$subscribe((mutation, state) => {
-  console.log(mutation)
-  console.log(state)
-  if (mutation.storeId === 'desktopApp') {
-    debounce(() => {
-      console.log('aaa')
-    }, 2000)
+const localCache = createLocalStorage()
+
+useDesktopAppStore().$subscribe((_mutation, state) => {
+  console.log(state.desktopList, 'state.desktopList')
+  if (state.desktopList.length) {
+    debouncedStorage(state)
+  } else {
+    localCache.removeItem(Cache.DeskTop_List)
   }
 })
+
+const debouncedStorage = debounce((state) => {
+  localCache.setItem(Cache.DeskTop_List, state.desktopList)
+}, 800)

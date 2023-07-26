@@ -73,41 +73,53 @@ const setupSortable = (app: App) => {
 
 const open = ({ openId, draggedId }: OpenProps) => {
   visible.value = true
-  if (draggedId) {
-    // draggedId存在，拖拽触发打开
-    index.value = desktopAppStore.apps
-      .filter((item) => item.isShow)
-      .findIndex((item) => item.id === desktopStore.relatedId)
-    const relatedIndex = desktopAppStore.apps.findIndex(
-      (item) => item.id === desktopStore.relatedId
-    )
-    apps.value = desktopAppStore.apps[relatedIndex]
-  } else {
-    // openId存在，说明是手动触发打开
-    index.value = desktopAppStore.apps.findIndex((item) => item.id === openId)
-    apps.value = desktopAppStore.apps[index.value]
+  const i = desktopAppStore.desktopList.findIndex(
+    (desktop) => desktop.id === desktopStore.currentDesktopId
+  )
+
+  if (i >= 0) {
+    const desktop = desktopAppStore.desktopList[i]
+    if (draggedId) {
+      // draggedId存在，拖拽触发打开
+      index.value = desktop.child
+        .filter((item) => item.isShow)
+        .findIndex((item) => item.id === desktopStore.relatedId)
+      const relatedIndex = desktop.child.findIndex((item) => item.id === desktopStore.relatedId)
+      apps.value = desktop.child[relatedIndex]
+    } else {
+      // openId存在，说明是手动触发打开
+      index.value = desktop.child.findIndex((item) => item.id === openId)
+      apps.value = desktop.child[index.value]
+    }
+    desktopStore.openFolderIndex = index.value
+
+    if (draggedId) {
+      const draggedIndex = desktop.child.findIndex((item) => item.id === draggedId)
+      createChildFolder(apps.value)
+      apps.value.child?.value.push({
+        parentId: apps.value.id,
+        ...desktop.child[draggedIndex],
+        id: uuidv4()
+      })
+    }
+
+    apps.value.title = apps.value.child.name
+
+    setupSortable(apps.value)
   }
-  desktopStore.openFolderIndex = index.value
-
-  if (draggedId) {
-    const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
-    createChildFolder(apps.value)
-    apps.value.child?.value.push({
-      parentId: apps.value.id,
-      ...desktopAppStore.apps[draggedIndex],
-      id: uuidv4()
-    })
-  }
-
-  apps.value.title = apps.value.child.name
-
-  setupSortable(apps.value)
 }
 
 const folderNameInput = (e: Event) => {
-  const app = reactive(desktopAppStore.apps[index.value])
-  app.child &&
-    (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
+  const i = desktopAppStore.desktopList.findIndex(
+    (desktop) => desktop.id === desktopStore.currentDesktopId
+  )
+
+  if (i >= 0) {
+    const desktop = desktopAppStore.desktopList[i]
+    const app = reactive(desktop.child[index.value])
+    app.child &&
+      (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
+  }
 }
 
 const debounceFolderNameInput = debounce(folderNameInput, 300)
