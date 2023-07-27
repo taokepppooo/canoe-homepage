@@ -42,3 +42,5 @@ export interface DesktopSortOptions {
 type DragStatus = '0' | '1' | '2'
 
 type MoveOriginalEvent = Event & MouseEvent
+
+type Direction = 'left' | 'right' | ''

@@ -7,10 +7,13 @@ import { useDesktopAppStore } from '@/stores/desktopApp'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopController } from '@/hooks/desktop/useDesktopController'
 import type { ElementRef } from '@/types/vue'
+import type { Direction } from '@/types/desktop'
 
 const ns = useNamespace('desktop-controller')
 const { appCSSConstant, appSize } = useDesktopGlobal()
 
+let direction = ref<Direction>()
+const directionEffect = ref<Direction>()
 const desktopRef = ref()
 const carouselRef = ref()
 const appsRef = ref<{ [key: string]: ElementRef }>({})
@@ -49,7 +52,12 @@ onMounted(() => {
 
   nextTick(() => {
     initDragged()
-    useDesktopController(desktopRef)
+  })
+
+  direction = useDesktopController(desktopRef).direction
+
+  watchEffect(() => {
+    directionEffect.value = direction.value
   })
   // useDesktop(desktopHeight, desktopRef, desktopAppStore.apps)
 })
@@ -74,6 +82,7 @@ const initDragged = () => {
 
 <template>
   <div ref="desktopRef" :class="ns.b()">
+    {{ directionEffect }}1111
     <ElCarousel ref="carouselRef" indicator-position="outside" :autoplay="false" arrow="never">
       <ElCarouselItem v-for="desktop in desktopAppStore.desktopList" :key="desktop.id">
         <div :ref="(ref: ElementRef) => (appsRef[desktop!.id] = ref)" :class="ns.e('apps')">
