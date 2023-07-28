@@ -33,7 +33,7 @@ onMounted(() => {
   desktopAppStore.desktopList.push({
     id: uuidv4(),
     name: '桌面1',
-    child: apps.slice(0, 10)
+    child: apps.slice(0, 20)
   })
   desktopAppStore.desktopList.push({
     id: uuidv4(),
@@ -53,7 +53,7 @@ onMounted(() => {
   // useDesktop(desktopHeight, desktopRef, desktopAppStore.apps)
 })
 
-const direction = useDesktopController(desktopRef).direction
+const direction = useDesktopController(carouselRef).direction
 
 const initDragged = () => {
   const element = appsRef.value[desktopStore.currentDesktopId] as HTMLElement

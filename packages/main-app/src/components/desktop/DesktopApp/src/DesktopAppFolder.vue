@@ -37,6 +37,8 @@ watch(
       appModalRef.value &&
       desktopStore.relatedId === app?.value.id
     ) {
+      // 清除合并时未在弹窗之前合理清除的问题
+      desktopStore.dragStatus = '0'
       app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.draggedId })
     }
   }
