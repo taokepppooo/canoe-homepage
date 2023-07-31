@@ -39,8 +39,10 @@ export interface DesktopSortOptions {
 }
 
 // 0: 初始化 1: 拖拽 2: 合并文件夹
-type DragStatus = '0' | '1' | '2'
+export type DragStatus = '0' | '1' | '2'
 
-type MoveOriginalEvent = Event & MouseEvent
+export type MoveOriginalEvent = Event & MouseEvent
 
-type Direction = 'left' | 'right' | ''
+export type Direction = 'left' | 'right' | ''
+
+export type DeskTopDirection = 'prev' | 'next' | ''

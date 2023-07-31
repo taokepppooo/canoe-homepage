@@ -53,7 +53,16 @@ onMounted(() => {
   // useDesktop(desktopHeight, desktopRef, desktopAppStore.apps)
 })
 
-const direction = useDesktopController(carouselRef).direction
+const { dragDirection, desktopChangeDirection } = useDesktopController(carouselRef)
+
+watch(
+  () => desktopChangeDirection.value,
+  () => {
+    nextTick(() => {
+      initDragged()
+    })
+  }
+)
 
 const initDragged = () => {
   const element = appsRef.value[desktopStore.currentDesktopId] as HTMLElement
@@ -75,7 +84,7 @@ const initDragged = () => {
 
 <template>
   <div ref="desktopRef" :class="ns.b()">
-    {{ direction }}1111
+    {{ dragDirection }}1111
     <ElCarousel ref="carouselRef" indicator-position="outside" :autoplay="false" arrow="never">
       <ElCarouselItem v-for="desktop in desktopAppStore.desktopList" :key="desktop.id">
         <div :ref="(ref: ElementRef) => (appsRef[desktop!.id] = ref)" :class="ns.e('apps')">
