@@ -1,6 +1,6 @@
 import { debounce } from 'lodash-es'
-import { createLocalStorage } from '@/utils/cache'
-import { Cache } from '@/types/enum'
+import { Cache } from '@/utils/cache'
+import { CacheEnum } from '@/types/enum'
 import type { Desktop } from '@/types/desktop'
 
 export const useDesktopAppStore = defineStore('desktopApp', {
@@ -13,17 +13,17 @@ interface State {
   desktopList: Desktop[]
 }
 
-const localCache = createLocalStorage()
+const cache = new Cache()
 
 useDesktopAppStore().$subscribe((_mutation, state) => {
-  console.log(state.desktopList, 'state.desktopList')
   if (state.desktopList.length) {
+    console.log(state, 'state')
     debouncedStorage(state)
   } else {
-    localCache.removeItem(Cache.DeskTop_List)
+    cache.removeItem(CacheEnum.DeskTop_List)
   }
 })
 
 const debouncedStorage = debounce((state) => {
-  localCache.setItem(Cache.DeskTop_List, state.desktopList)
+  cache.setItem(CacheEnum.DeskTop_List, state.desktopList)
 }, 800)

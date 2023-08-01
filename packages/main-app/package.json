@@ -32,6 +32,7 @@
     "@types/uuid": "^9.0.1",
     "@vueuse/core": "^10.2.1",
     "element-plus": "^2.3.6",
+    "localforage": "^1.10.0",
     "normalize.css": "^8.0.1",
     "pinia": "^2.0.32",
     "sortablejs": "^1.15.0",

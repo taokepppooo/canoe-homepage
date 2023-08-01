@@ -60,11 +60,17 @@ export const useDesktopController = (
 }
 
 const DELAY = 500
+let changeTimer: NodeJS.Timeout | null = null
 const changeDesktop = (
   dragDirection: Ref<Direction>,
   elementX: Ref<number>,
   elementY: Ref<number>
 ) => {
+  if (changeTimer) {
+    clearTimeout(changeTimer)
+    changeTimer = null
+  }
+  desktopChangeDirection.value = ''
   oldElementX = elementX.value
   oldElementY = elementY.value
 
@@ -80,6 +86,11 @@ const debounceUpdateOldElementPosition = debounce(
       oldElementY === elementY.value
     ) {
       desktopChangeDirection.value = directionMap[dragDirection.value] || ''
+      changeTimer = setTimeout(() => {
+        changeDesktop(dragDirection, elementX, elementY)
+      }, DELAY)
+    } else {
+      return
     }
   },
   DELAY

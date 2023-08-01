@@ -53,18 +53,37 @@ onMounted(() => {
   // useDesktop(desktopHeight, desktopRef, desktopAppStore.apps)
 })
 
-const { dragDirection, desktopChangeDirection } = useDesktopController(carouselRef)
+const { desktopChangeDirection } = useDesktopController(carouselRef)
+
+const changeDirectionMap = {
+  prev: () => {
+    setDesktopId()
+    carouselRef.value.prev()
+  },
+  next: () => {
+    setDesktopId()
+    carouselRef.value.next()
+  }
+}
+
+const setDesktopId = () => {
+  desktopStore.oldCurrentDesktopId = desktopStore.currentDesktopId
+}
 
 watch(
   () => desktopChangeDirection.value,
-  () => {
-    nextTick(() => {
-      initDragged()
-    })
+  (value) => {
+    if (value) {
+      changeDirectionMap[value]()
+    }
   }
 )
 
-const initDragged = () => {
+const initDragged = (idx?: number) => {
+  if (idx !== undefined) {
+    setDesktopId()
+    desktopStore.currentDesktopId = desktopAppStore.desktopList[idx].id
+  }
   const element = appsRef.value[desktopStore.currentDesktopId] as HTMLElement
   const index = desktopAppStore.desktopList.findIndex(
     (desktop) => desktop.id === desktopStore.currentDesktopId
@@ -84,8 +103,14 @@ const initDragged = () => {
 
 <template>
   <div ref="desktopRef" :class="ns.b()">
-    {{ dragDirection }}1111
-    <ElCarousel ref="carouselRef" indicator-position="outside" :autoplay="false" arrow="never">
+    <ElCarousel
+      ref="carouselRef"
+      indicator-position="outside"
+      :autoplay="false"
+      arrow="never"
+      trigger="click"
+      @change="initDragged"
+    >
       <ElCarouselItem v-for="desktop in desktopAppStore.desktopList" :key="desktop.id">
         <div :ref="(ref: ElementRef) => (appsRef[desktop!.id] = ref)" :class="ns.e('apps')">
           <template v-for="app in desktop.child" :key="app.id">

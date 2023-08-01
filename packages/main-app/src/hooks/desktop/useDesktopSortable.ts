@@ -74,9 +74,12 @@ const onMove = (
     return true
   }
 
-  if (list[relatedIndex].id !== desktopStore.relatedId) {
-    desktopStore.relatedId = list[relatedIndex].id
-  }
+  // DiffDesktopConditionExecutor(() => {}, () = {
+  //   if (list[relatedIndex].id !== desktopStore.relatedId) {
+  //     desktopStore.relatedId = list[relatedIndex].id
+  //   }
+  // }
+  // )
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
 
@@ -104,12 +107,20 @@ export const useDesktopSortable = ({
   options,
   withFolder = true
 }: DesktopSortOptions) => {
-  const index = desktopAppStore.desktopList.findIndex(
+  const currentDesktopIndex = desktopAppStore.desktopList.findIndex(
     (desktop) => desktop.id === desktopStore.currentDesktopId
   )
+  const currentOldDesktopIndex = desktopAppStore.desktopList.findIndex(
+    (desktop) => desktop.id === desktopStore.oldCurrentDesktopId
+  )
 
-  if (index >= 0) {
-    const desktop = desktopAppStore.desktopList[index]
+  const notSort = !desktopStore.desktopSortableList.includes(desktopStore.currentDesktopId)
+  if (notSort) {
+    desktopStore.desktopSortableList.push(desktopStore.currentDesktopId)
+  }
+
+  if (currentDesktopIndex >= 0) {
+    const desktop = desktopAppStore.desktopList[currentDesktopIndex]
     useSortable(element, {
       ...options,
       forceFallback: false,
@@ -205,4 +216,22 @@ const calculateIntersectionArea = (
   const intersectionArea = overlapX * overlapY
 
   return intersectionArea
+}
+
+const DiffDesktopConditionExecutor = (trueFunc, falseFunc) => {
+  console.log(
+    desktopStore.oldCurrentDesktopId &&
+      desktopStore.currentDesktopId !== desktopStore.oldCurrentDesktopId,
+    'desktopStore.currentDesktopId !== desktopStore.oldCurrentDesktopId'
+  )
+  console.log(desktopStore.currentDesktopId)
+  console.log(desktopStore.oldCurrentDesktopId)
+  if (
+    desktopStore.oldCurrentDesktopId &&
+    desktopStore.currentDesktopId !== desktopStore.oldCurrentDesktopId
+  ) {
+    trueFunc()
+  } else {
+    falseFunc()
+  }
 }

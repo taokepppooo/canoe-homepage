@@ -7,7 +7,9 @@ export const useDesktopStore = defineStore('desktop', {
     isDragging: false,
     openFolderIndex: null,
     dragStatus: '0',
-    currentDesktopId: ''
+    oldCurrentDesktopId: '',
+    currentDesktopId: '',
+    desktopSortableList: []
   })
 })
 
@@ -17,5 +19,7 @@ interface State {
   isDragging: boolean
   openFolderIndex: number | null // 当前打开的文件的索引
   dragStatus: DragStatus
+  oldCurrentDesktopId: string // 上一个桌面id
   currentDesktopId: string // 当前桌面id
+  desktopSortableList: string[] // 桌面排序列表
 }
