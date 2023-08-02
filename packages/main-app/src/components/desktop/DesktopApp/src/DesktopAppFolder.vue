@@ -3,10 +3,12 @@ import { nextTick } from 'process'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
+import { useDesktopAppStore } from '@/stores/desktopApp'
 import type { App } from '@/types/desktop'
 
 const ns = useNamespace('desktop-app-folder')
 const desktopStore = useDesktopStore()
+const desktopAppStore = useDesktopAppStore()
 const { appCSSConstant } = useDesktopGlobal()
 
 const props = defineProps<{
@@ -19,27 +21,32 @@ const app: Ref<App> | undefined = inject('app')
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const appModalRef = ref<{ [key: string]: any }>({})
 
-const handleClick = () => {
-  // 指定desktopStore.relatedId，用于DesktopAppFolderModal的if判断
-  if (app?.value.id !== desktopStore.relatedId) {
-    desktopStore.relatedId = app?.value.id || ''
+const setOpenFolder = (id = '') => {
+  const desktopList = desktopAppStore.desktopList
+  const currentDesktopIndex = desktopStore.currentDesktop.index as number
+  desktopStore.openFolder.id = id
+  if (currentDesktopIndex >= 0) {
+    desktopStore.openFolder.index = desktopList[currentDesktopIndex].child?.findIndex(
+      (item) => item.id === id
+    )
   }
+}
+
+const handleClick = () => {
+  setOpenFolder(app?.value.id)
   nextTick(() => {
-    app?.value.id && appModalRef.value[app?.value.id].open({ openId: app?.value.id })
+    app?.value.id && appModalRef.value[app?.value.id].open()
   })
 }
 
 watch(
   () => desktopStore.dragStatus,
   () => {
-    if (
-      desktopStore.dragStatus === '2' &&
-      appModalRef.value &&
-      desktopStore.relatedId === app?.value.id
-    ) {
+    if (desktopStore.dragStatus === '2' && appModalRef.value) {
       // 清除合并时未在弹窗之前合理清除的问题
       desktopStore.dragStatus = '0'
-      app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.draggedId })
+      setOpenFolder(desktopStore.related.id)
+      app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.dragged.id })
     }
   }
 )

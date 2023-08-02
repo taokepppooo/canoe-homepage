@@ -17,6 +17,8 @@ const appsRef = ref<{ [key: string]: ElementRef }>({})
 const desktopHeight = ref('auto')
 const desktopAppStore = useDesktopAppStore()
 const desktopStore = useDesktopStore()
+const currentDesktop = reactive(desktopStore.currentDesktop)
+const desktopList = reactive(desktopAppStore.desktopList)
 
 onMounted(() => {
   // TODO: 替换数据
@@ -45,7 +47,8 @@ onMounted(() => {
     name: '桌面3',
     child: apps.slice(25, 50)
   })
-  desktopStore.currentDesktopId = desktopAppStore.desktopList[0].id
+  desktopStore.currentDesktop.id = desktopList[0].id
+  desktopStore.currentDesktop.index = 0
 
   nextTick(() => {
     initDragged()
@@ -67,7 +70,7 @@ const changeDirectionMap = {
 }
 
 const setDesktopId = () => {
-  desktopStore.oldCurrentDesktopId = desktopStore.currentDesktopId
+  // desktopStore.oldCurrentDesktopId = currentDesktop.id
 }
 
 watch(
@@ -79,20 +82,21 @@ watch(
   }
 )
 
-const initDragged = (idx?: number) => {
-  if (idx !== undefined) {
+const initDragged = (idx = 0) => {
+  if (idx) {
     setDesktopId()
-    desktopStore.currentDesktopId = desktopAppStore.desktopList[idx].id
+    desktopStore.currentDesktop.id = desktopList[idx].id
+    desktopStore.currentDesktop.index = idx
   }
-  const element = appsRef.value[desktopStore.currentDesktopId] as HTMLElement
-  const index = desktopAppStore.desktopList.findIndex(
-    (desktop) => desktop.id === desktopStore.currentDesktopId
-  )
 
-  if (index >= 0) {
+  const currentDesktopId = currentDesktop.id as string
+  const currentDesktopIndex = currentDesktop.index as number
+  const element = appsRef.value[currentDesktopId] as HTMLElement
+
+  if (currentDesktopIndex >= 0) {
     useDesktopSortable({
       element,
-      list: desktopAppStore.desktopList[index].child,
+      list: desktopList[currentDesktopIndex].child,
       options: {
         group: 'desktop'
       }

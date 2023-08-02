@@ -9,7 +9,6 @@ import { useDesktopAppStore } from '@/stores/desktopApp'
 import type { App } from '@/types/desktop'
 
 interface OpenProps {
-  openId?: string
   draggedId?: string
 }
 
@@ -23,8 +22,12 @@ const appsRef = ref()
 const bodyRef = ref()
 const visible = ref(false)
 const desktopHeight = ref('auto')
-const index = ref(0)
 const apps = ref()
+const currentDesktopIndex = ref(desktopStore.currentDesktop.index as number)
+const desktopList = reactive(desktopAppStore.desktopList)
+const openFolder = reactive(desktopStore.openFolder)
+const desktop = reactive(desktopList[currentDesktopIndex.value as number].child)
+const dragged = reactive(desktopStore.dragged)
 
 const { isOutside } = useMouseInElement(bodyRef)
 
@@ -71,36 +74,25 @@ const setupSortable = (app: App) => {
   })
 }
 
-const open = ({ openId, draggedId }: OpenProps) => {
+const open = ({ draggedId }: OpenProps = {}) => {
   visible.value = true
-  const i = desktopAppStore.desktopList.findIndex(
-    (desktop) => desktop.id === desktopStore.currentDesktopId
-  )
 
-  if (i >= 0) {
-    const desktop = desktopAppStore.desktopList[i]
+  if (currentDesktopIndex.value >= 0) {
     if (draggedId) {
-      // draggedId存在，拖拽触发打开
-      index.value = desktop.child
-        .filter((item) => item.isShow)
-        .findIndex((item) => item.id === desktopStore.relatedId)
-      const relatedIndex = desktop.child.findIndex((item) => item.id === desktopStore.relatedId)
-      apps.value = desktop.child[relatedIndex]
-    } else {
-      // openId存在，说明是手动触发打开
-      index.value = desktop.child.findIndex((item) => item.id === openId)
-      apps.value = desktop.child[index.value]
-    }
-    desktopStore.openFolderIndex = index.value
+      const openFolderIndex = openFolder.index
+      apps.value = desktop[openFolderIndex as number]
+      const draggedIndex = dragged
 
-    if (draggedId) {
-      const draggedIndex = desktop.child.findIndex((item) => item.id === draggedId)
       createChildFolder(apps.value)
       apps.value.child?.value.push({
         parentId: apps.value.id,
-        ...desktop.child[draggedIndex],
+        ...desktop[draggedIndex as number],
         id: uuidv4()
       })
+      desktop.splice(dragged as number, 1)
+    } else {
+      const openIdex = openFolder.index
+      apps.value = desktop[openIdex as number]
     }
 
     apps.value.title = apps.value.child.name
@@ -110,13 +102,8 @@ const open = ({ openId, draggedId }: OpenProps) => {
 }
 
 const folderNameInput = (e: Event) => {
-  const i = desktopAppStore.desktopList.findIndex(
-    (desktop) => desktop.id === desktopStore.currentDesktopId
-  )
-
-  if (i >= 0) {
-    const desktop = desktopAppStore.desktopList[i]
-    const app = reactive(desktop.child[index.value])
+  if (currentDesktopIndex.value >= 0) {
+    const app = reactive(desktop[openFolder.index as number])
     app.child &&
       (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
   }

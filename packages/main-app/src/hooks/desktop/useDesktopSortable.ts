@@ -11,7 +11,6 @@ const desktopAppStore = useDesktopAppStore()
 const { appSize } = useDesktopGlobal()
 
 const DELAY = 700
-let draggedId = ''
 let draggedOffsetX = 0
 let draggedOffsetY = 0
 let draggedIndex = 0
@@ -29,7 +28,6 @@ const onMoveHandler = (evt: any, list: App[]) => {
   }
 
   const mergeFunc = () => {
-    list[draggedIndex].isShow = false
     nextTick(() => {
       desktopStore.dragStatus = '2'
     })
@@ -67,19 +65,18 @@ const onMove = (
   list: App[],
   withFolder: boolean
 ) => {
+  desktopStore.dragged.deskTopIndex = desktopStore.currentDesktop.index
+  const currentDesktopIndex = desktopStore.dragged.deskTopIndex as number
   relatedIndex = Array.from(evt.to.children).indexOf(evt.related)
+  desktopStore.related.id =
+    desktopAppStore.desktopList[currentDesktopIndex].child[relatedIndex].id || ''
+  desktopStore.related.index = relatedIndex
+  desktopStore.related.deskTopIndex = currentDesktopIndex
 
   if (!withFolder) {
     desktopStore.dragStatus = '1'
     return true
   }
-
-  // DiffDesktopConditionExecutor(() => {}, () = {
-  //   if (list[relatedIndex].id !== desktopStore.relatedId) {
-  //     desktopStore.relatedId = list[relatedIndex].id
-  //   }
-  // }
-  // )
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
 
@@ -107,17 +104,8 @@ export const useDesktopSortable = ({
   options,
   withFolder = true
 }: DesktopSortOptions) => {
-  const currentDesktopIndex = desktopAppStore.desktopList.findIndex(
-    (desktop) => desktop.id === desktopStore.currentDesktopId
-  )
-  const currentOldDesktopIndex = desktopAppStore.desktopList.findIndex(
-    (desktop) => desktop.id === desktopStore.oldCurrentDesktopId
-  )
-
-  const notSort = !desktopStore.desktopSortableList.includes(desktopStore.currentDesktopId)
-  if (notSort) {
-    desktopStore.desktopSortableList.push(desktopStore.currentDesktopId)
-  }
+  desktopStore.dragged.deskTopIndex = desktopStore.currentDesktop.index
+  const currentDesktopIndex = desktopStore.dragged.deskTopIndex as number
 
   if (currentDesktopIndex >= 0) {
     const desktop = desktopAppStore.desktopList[currentDesktopIndex]
@@ -131,18 +119,20 @@ export const useDesktopSortable = ({
           originalEvent: { offsetX, offsetY }
         } = evt
 
+        desktopStore.isDragging = true
         draggedOffsetX = offsetX
         draggedOffsetY = offsetY
         draggedIndex = evt.oldIndex
+        desktopStore.dragged.index = draggedIndex
+
         // 解决拖拽文件夹内到外时，list未更新导致的bug
         if (!list[draggedIndex].parentId) {
           list = desktop.child
         }
-        draggedId = list[draggedIndex].id || ''
-        if (draggedId !== desktopStore.draggedId) {
-          desktopStore.draggedId = draggedId
+        const draggedId = list[draggedIndex].id || ''
+        if (draggedId !== desktopStore.dragged.id) {
+          desktopStore.dragged.id = draggedId
         }
-        desktopStore.isDragging = true
       },
       onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
         onMove(evt, originalEvent, list, withFolder),
@@ -163,7 +153,6 @@ export const useDesktopSortable = ({
           ) {
             // 弹窗内拖拽到谈窗外
             delete list[draggedIndex].parentId
-            list[draggedIndex].isShow = true
 
             evt.newIndex && desktop.child.splice(evt.newIndex, 0, list[draggedIndex])
             list.splice(draggedIndex, 1)
@@ -173,7 +162,7 @@ export const useDesktopSortable = ({
             ;[list[relatedIndex], list[draggedIndex]] = [list[draggedIndex], list[relatedIndex]]
           }
         }
-        desktop.child = desktop.child.filter((app) => app.isShow)
+
         desktopStore.dragStatus = '0'
 
         if (timer) {
@@ -216,22 +205,4 @@ const calculateIntersectionArea = (
   const intersectionArea = overlapX * overlapY
 
   return intersectionArea
-}
-
-const DiffDesktopConditionExecutor = (trueFunc, falseFunc) => {
-  console.log(
-    desktopStore.oldCurrentDesktopId &&
-      desktopStore.currentDesktopId !== desktopStore.oldCurrentDesktopId,
-    'desktopStore.currentDesktopId !== desktopStore.oldCurrentDesktopId'
-  )
-  console.log(desktopStore.currentDesktopId)
-  console.log(desktopStore.oldCurrentDesktopId)
-  if (
-    desktopStore.oldCurrentDesktopId &&
-    desktopStore.currentDesktopId !== desktopStore.oldCurrentDesktopId
-  ) {
-    trueFunc()
-  } else {
-    falseFunc()
-  }
 }
