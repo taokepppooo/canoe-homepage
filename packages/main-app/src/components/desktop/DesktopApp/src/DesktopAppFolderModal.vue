@@ -23,19 +23,21 @@ const bodyRef = ref()
 const visible = ref(false)
 const desktopHeight = ref('auto')
 const apps = ref()
-const currentDesktopIndex = ref(desktopStore.currentDesktop.index as number)
-const desktopList = reactive(desktopAppStore.desktopList)
-const openFolder = reactive(desktopStore.openFolder)
-const desktop = reactive(desktopList[currentDesktopIndex.value as number].child)
-const dragged = reactive(desktopStore.dragged)
+
+const currentDesktopIndex = computed(() => desktopStore.currentDesktop.index as number)
+const desktopList = computed(() => desktopAppStore.desktopList)
+const openFolder = computed(() => desktopStore.openFolder)
+const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
+const dragged = computed(() => desktopStore.dragged)
 
 const { isOutside } = useMouseInElement(bodyRef)
 
 watch(
   () => isOutside.value,
   () => {
-    if (desktopStore.isDragging && isOutside.value) {
+    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder) {
       visible.value = false
+      desktopStore.openFolder = {}
     }
   }
 )
@@ -52,8 +54,7 @@ const createChildFolder = (app: App, isFolder = false) => {
       parentId: app.id,
       title: app.title,
       img: app.img,
-      isFolder,
-      isShow: true
+      isFolder
     })
   }
 }
@@ -77,33 +78,32 @@ const setupSortable = (app: App) => {
 const open = ({ draggedId }: OpenProps = {}) => {
   visible.value = true
 
-  if (currentDesktopIndex.value >= 0) {
-    if (draggedId) {
-      const openFolderIndex = openFolder.index
-      apps.value = desktop[openFolderIndex as number]
-      const draggedIndex = dragged
+  if (draggedId) {
+    const openFolderIndex = openFolder.value.index
+    apps.value = desktop.value[openFolderIndex as number]
+    const draggedIndex = dragged.value.index as number
+    const draggedDesktop = desktopList.value[dragged.value.deskTopIndex as number].child
 
-      createChildFolder(apps.value)
-      apps.value.child?.value.push({
-        parentId: apps.value.id,
-        ...desktop[draggedIndex as number],
-        id: uuidv4()
-      })
-      desktop.splice(dragged as number, 1)
-    } else {
-      const openIdex = openFolder.index
-      apps.value = desktop[openIdex as number]
-    }
-
-    apps.value.title = apps.value.child.name
-
-    setupSortable(apps.value)
+    createChildFolder(apps.value)
+    apps.value.child?.value.push({
+      parentId: apps.value.id,
+      ...draggedDesktop[draggedIndex],
+      id: uuidv4()
+    })
+    draggedDesktop.splice(draggedIndex, 1)
+  } else {
+    const openIdex = openFolder.value.index
+    apps.value = desktop.value[openIdex as number]
   }
+
+  apps.value.title = apps.value.child.name
+
+  setupSortable(apps.value)
 }
 
 const folderNameInput = (e: Event) => {
   if (currentDesktopIndex.value >= 0) {
-    const app = reactive(desktop[openFolder.index as number])
+    const app = reactive(desktop.value[openFolder.value.index as number])
     app.child &&
       (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
   }

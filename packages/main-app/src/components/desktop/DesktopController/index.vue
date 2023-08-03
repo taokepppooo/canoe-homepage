@@ -35,17 +35,17 @@ onMounted(() => {
   desktopAppStore.desktopList.push({
     id: uuidv4(),
     name: '桌面1',
-    child: apps.slice(0, 20)
+    child: apps.slice(0, 25)
   })
   desktopAppStore.desktopList.push({
     id: uuidv4(),
     name: '桌面2',
-    child: apps.slice(10, 25)
+    child: apps.slice(26, 36)
   })
   desktopAppStore.desktopList.push({
     id: uuidv4(),
     name: '桌面3',
-    child: apps.slice(25, 50)
+    child: apps.slice(37, 70)
   })
   desktopStore.currentDesktop.id = desktopList[0].id
   desktopStore.currentDesktop.index = 0
@@ -60,17 +60,16 @@ const { desktopChangeDirection } = useDesktopController(carouselRef)
 
 const changeDirectionMap = {
   prev: () => {
-    setDesktopId()
     carouselRef.value.prev()
   },
   next: () => {
-    setDesktopId()
     carouselRef.value.next()
   }
 }
 
-const setDesktopId = () => {
-  // desktopStore.oldCurrentDesktopId = currentDesktop.id
+const setDesktopId = (idx: number) => {
+  desktopStore.currentDesktop.id = currentDesktop.id
+  desktopStore.currentDesktop.index = idx
 }
 
 watch(
@@ -82,13 +81,15 @@ watch(
   }
 )
 
-const initDragged = (idx = 0) => {
-  if (idx) {
-    setDesktopId()
-    desktopStore.currentDesktop.id = desktopList[idx].id
-    desktopStore.currentDesktop.index = idx
-  }
+const handleChanged = (idx: number) => {
+  setDesktopId(idx)
+  desktopStore.currentDesktop.id = desktopList.find((item, index) => index === idx)?.id
+  desktopStore.currentDesktop.index = idx
 
+  initDragged()
+}
+
+const initDragged = () => {
   const currentDesktopId = currentDesktop.id as string
   const currentDesktopIndex = currentDesktop.index as number
   const element = appsRef.value[currentDesktopId] as HTMLElement
@@ -113,12 +114,12 @@ const initDragged = (idx = 0) => {
       :autoplay="false"
       arrow="never"
       trigger="click"
-      @change="initDragged"
+      @change="handleChanged"
     >
       <ElCarouselItem v-for="desktop in desktopAppStore.desktopList" :key="desktop.id">
         <div :ref="(ref: ElementRef) => (appsRef[desktop!.id] = ref)" :class="ns.e('apps')">
           <template v-for="app in desktop.child" :key="app.id">
-            <DesktopApp v-show="app.isShow" :app="app" :gap-rows="1" :gap-columns="1" />
+            <DesktopApp :app="app" :gap-rows="1" :gap-columns="1" />
           </template>
         </div>
       </ElCarouselItem>
