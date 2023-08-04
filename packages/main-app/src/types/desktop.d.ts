@@ -34,7 +34,6 @@ export interface DesktopSortOptions {
   list: App[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options?: any
-  withFolder?: boolean
 }
 
 // 0: 初始化 1: 拖拽 2: 合并文件夹

@@ -28,8 +28,7 @@ onMounted(() => {
       id: uuidv4(),
       title: `${i}`,
       img: 'https://files.codelife.cc/icons/guide.svg',
-      isFolder: false,
-      isShow: true
+      isFolder: false
     })
   }
   desktopAppStore.desktopList.push({

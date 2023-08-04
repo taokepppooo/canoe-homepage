@@ -30,7 +30,12 @@ let moveY = 0
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onMoveHandler = (evt: any, list: App[]) => {
   if (desktopStore.dragStatus !== '0') return
-  if (list[draggedIndex.value].isFolder) {
+  if (
+    list[draggedIndex.value].isFolder ||
+    (list[draggedIndex.value].parentId &&
+      relatedApp.value.parentId &&
+      list[draggedIndex.value].parentId === relatedApp.value.parentId)
+  ) {
     desktopStore.dragStatus = '1'
     return
   }
@@ -46,42 +51,27 @@ const onMoveHandler = (evt: any, list: App[]) => {
     // 拖拽为文件
     if (!list[draggedIndex.value].isFolder) {
       mergeFunc()
-      return
-    } else {
-      desktopStore.dragStatus = '1'
-      return
+    }
+  } else {
+    const { originalEvent, relatedRect } = evt
+    const RATIO = 0.5
+    const mergeArea = relatedRect.width * relatedRect.height * RATIO
+    const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
+
+    if (intersectionArea > mergeArea) {
+      desktopList.value[related.value.deskTopIndex as number].child[relatedIndex.value].isFolder =
+        true
+      mergeFunc()
     }
   }
 
-  const { originalEvent, relatedRect } = evt
-  const RATIO = 0.5
-  const mergeArea = relatedRect.width * relatedRect.height * RATIO
-  const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
-
-  if (intersectionArea > mergeArea) {
-    desktopList.value[related.value.deskTopIndex as number].child[relatedIndex.value].isFolder =
-      true
-
-    mergeFunc()
-  } else {
-    desktopStore.dragStatus = '1'
-  }
+  desktopStore.dragStatus = '1'
 }
 
-const onMove = (
-  evt: Sortable.MoveEvent,
-  originalEvent: MoveOriginalEvent,
-  list: App[],
-  withFolder: boolean
-) => {
+const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
   desktopStore.related.index = Array.from(evt.to.children).indexOf(evt.related)
   desktopStore.related.id = desktop.value[relatedIndex.value].id
   desktopStore.related.deskTopIndex = currentDesktopIndex.value
-
-  if (!withFolder) {
-    desktopStore.dragStatus = '1'
-    return true
-  }
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
 
@@ -103,12 +93,7 @@ const onMove = (
 }
 
 // 只适用于首页桌面和首页桌面文件夹内的拖拽
-export const useDesktopSortable = ({
-  element,
-  list,
-  options,
-  withFolder = true
-}: DesktopSortOptions) => {
+export const useDesktopSortable = ({ element, list, options }: DesktopSortOptions) => {
   useSortable(element, {
     ...options,
     forceFallback: false,
@@ -131,43 +116,23 @@ export const useDesktopSortable = ({
       }
     },
     onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
-      onMove(evt, originalEvent, list, withFolder),
+      onMove(evt, originalEvent, list),
     onEnd: (evt: Sortable.SortableEvent) => {
       desktopStore.isDragging = false
-      if (desktopStore.dragStatus === '1') {
-        if (evt.from.className === evt.to.className && relatedApp.value.parentId) {
-          const index = desktop.value.findIndex((app) => app.id === relatedApp.value.parentId)
-          // 弹窗内拖拽
-          const apps = desktop.value[index].child?.value || []
-          ;[apps[relatedIndex.value], apps[draggedIndex.value]] = [
-            apps[draggedIndex.value],
-            apps[relatedIndex.value]
-          ]
-        } else if (
-          list[draggedIndex.value].parentId &&
-          evt.from.className === `${defaultNamespace}-desktop-folder-modal-body__desktop__apps` &&
-          evt.to.className === `${defaultNamespace}-desktop-controller__apps`
-        ) {
-          // 弹窗内拖拽到谈窗外
-          delete list[draggedIndex.value].parentId
 
-          evt.newIndex && desktop.value.splice(evt.newIndex, 0, list[draggedIndex.value])
-          list.splice(draggedIndex.value, 1)
-          // 解决拖拽文件夹内到外时，会有dom残留的bug
-          evt.to.removeChild(evt.item)
-        } else if (dragged.value.deskTopIndex !== related.value.deskTopIndex) {
-          // 拖拽的元素和目标元素不同
-          desktopList.value[related.value.deskTopIndex as number].child.splice(
-            relatedIndex.value,
-            0,
-            list[draggedIndex.value]
-          )
-          list.splice(draggedIndex.value, 1)
+      // 使用更具描述性的变量名
+      const fromClass = evt.from.className
+      const toClass = evt.to.className
+
+      if (desktopStore.dragStatus === '1') {
+        if (isDragInFolderModal(fromClass, toClass)) {
+          handleDragInFolderModal()
+        } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
+          handleDragFromModalToOutside(list, evt)
+        } else if (isDragToDifferentElementDesktop()) {
+          handleDragToDifferentElementDesktop(list)
         } else {
-          ;[list[relatedIndex.value], list[draggedIndex.value]] = [
-            list[draggedIndex.value],
-            list[relatedIndex.value]
-          ]
+          swapElements(list)
         }
       }
 
@@ -179,6 +144,55 @@ export const useDesktopSortable = ({
       }
     }
   })
+}
+
+const isDragInFolderModal = (fromClass: string, toClass: string) => {
+  return fromClass === toClass && relatedApp.value.parentId
+}
+const handleDragInFolderModal = () => {
+  const index = desktop.value.findIndex((app) => app.id === relatedApp.value.parentId)
+  // 弹窗内拖拽
+  const apps = desktop.value[index].child?.value || []
+  ;[apps[relatedIndex.value], apps[draggedIndex.value]] = [
+    apps[draggedIndex.value],
+    apps[relatedIndex.value]
+  ]
+}
+const isDragFromModalToOutside = (fromClass: string, toClass: string, list: App[]) => {
+  return (
+    list[draggedIndex.value].parentId &&
+    fromClass === `${defaultNamespace}-desktop-folder-modal-body__desktop__apps` &&
+    toClass === `${defaultNamespace}-desktop-controller__apps`
+  )
+}
+const handleDragFromModalToOutside = (list: App[], evt: Sortable.SortableEvent) => {
+  delete list[draggedIndex.value].parentId
+
+  evt.newIndex && desktop.value.splice(evt.newIndex, 0, list[draggedIndex.value])
+  removeDraggedItemFromList(list)
+  // 解决拖拽文件夹内到外时，会有dom残留的bug
+  evt.to.removeChild(evt.item)
+}
+const removeDraggedItemFromList = (list: App[]) => {
+  list.splice(draggedIndex.value, 1)
+}
+const isDragToDifferentElementDesktop = () => {
+  return dragged.value.deskTopIndex !== related.value.deskTopIndex
+}
+const handleDragToDifferentElementDesktop = (list: App[]) => {
+  // 拖拽的元素和目标元素不同
+  desktopList.value[related.value.deskTopIndex as number].child.splice(
+    relatedIndex.value,
+    0,
+    list[draggedIndex.value]
+  )
+  removeDraggedItemFromList(list)
+}
+const swapElements = (list: App[]) => {
+  ;[list[relatedIndex.value], list[draggedIndex.value]] = [
+    list[draggedIndex.value],
+    list[relatedIndex.value]
+  ]
 }
 
 const calculateIntersectionArea = (

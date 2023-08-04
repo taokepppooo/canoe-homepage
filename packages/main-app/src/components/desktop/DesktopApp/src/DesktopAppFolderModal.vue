@@ -29,6 +29,9 @@ const desktopList = computed(() => desktopAppStore.desktopList)
 const openFolder = computed(() => desktopStore.openFolder)
 const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
 const dragged = computed(() => desktopStore.dragged)
+const related = computed(() => desktopStore.related)
+const draggedIndex = computed(() => desktopStore.dragged.index as number)
+const relatedIndex = computed(() => desktopStore.related.index as number)
 
 const { isOutside } = useMouseInElement(bodyRef)
 
@@ -69,8 +72,7 @@ const setupSortable = (app: App) => {
         list: app.child?.value,
         options: {
           group: 'desktop'
-        },
-        withFolder: false
+        }
       })
   })
 }
@@ -79,18 +81,23 @@ const open = ({ draggedId }: OpenProps = {}) => {
   visible.value = true
 
   if (draggedId) {
-    const openFolderIndex = openFolder.value.index
-    apps.value = desktop.value[openFolderIndex as number]
-    const draggedIndex = dragged.value.index as number
-    const draggedDesktop = desktopList.value[dragged.value.deskTopIndex as number].child
+    /* if (isModalMoveOtherDesktopModal()) {
+    } else if (isModalMoveModal()) {
+      console.log('bbb')
+    } else {
+      console.log('aaa')
+      const draggedDesktop = desktopList.value[dragged.value.deskTopIndex as number].child
+      apps.value = desktopList.value[related.value.deskTopIndex].child[relatedIndex.value]
+      console.log(desktopList.value)
 
-    createChildFolder(apps.value)
-    apps.value.child?.value.push({
-      parentId: apps.value.id,
-      ...draggedDesktop[draggedIndex],
-      id: uuidv4()
-    })
-    draggedDesktop.splice(draggedIndex, 1)
+      createChildFolder(apps.value)
+      apps.value.child?.value.push({
+        parentId: apps.value.id,
+        ...draggedDesktop[draggedIndex.value],
+        id: uuidv4()
+      })
+      draggedDesktop.splice(draggedIndex.value, 1)
+    } */
   } else {
     const openIdex = openFolder.value.index
     apps.value = desktop.value[openIdex as number]
@@ -99,6 +106,23 @@ const open = ({ draggedId }: OpenProps = {}) => {
   apps.value.title = apps.value.child.name
 
   setupSortable(apps.value)
+}
+
+const isModalMoveOtherDesktop = () => {
+  return !desktop.value[relatedIndex.value].parentId && !isSameDesktop()
+}
+const isModalMoveOtherDesktopModal = () => {
+  return desktop.value[relatedIndex.value].parentId && !isSameDesktop()
+}
+const isSameDesktop = () => {
+  return dragged.value.deskTopIndex === related.value.deskTopIndex
+}
+const isModalMoveModal = () => {
+  return (
+    desktop.value[draggedIndex.value].parentId &&
+    !desktop.value[relatedIndex.value].parentId &&
+    isSameDesktop()
+  )
 }
 
 const folderNameInput = (e: Event) => {
