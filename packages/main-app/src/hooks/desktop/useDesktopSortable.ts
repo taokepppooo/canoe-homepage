@@ -72,6 +72,11 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
   desktopStore.related.index = Array.from(evt.to.children).indexOf(evt.related)
   desktopStore.related.id = desktop.value[relatedIndex.value].id
   desktopStore.related.deskTopIndex = currentDesktopIndex.value
+  if (desktop.value[relatedIndex.value].parentId) {
+    desktopStore.related.inFolder = true
+  } else {
+    desktopStore.related.inFolder = false
+  }
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
 
@@ -113,6 +118,11 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
       const draggedId = list[draggedIndex.value].id || ''
       if (draggedId !== desktopStore.dragged.id) {
         desktopStore.dragged.id = draggedId
+      }
+      if (list[draggedIndex.value].parentId) {
+        desktopStore.dragged.inFolder = true
+      } else {
+        desktopStore.dragged.inFolder = false
       }
     },
     onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>

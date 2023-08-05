@@ -10,6 +10,7 @@ import type { App } from '@/types/desktop'
 
 interface OpenProps {
   draggedId?: string
+  openFolderId?: string
 }
 
 const ns = useNamespace('desktop-folder-modal')
@@ -38,9 +39,8 @@ const { isOutside } = useMouseInElement(bodyRef)
 watch(
   () => isOutside.value,
   () => {
-    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder) {
+    if (desktopStore.isDragging && isOutside.value) {
       visible.value = false
-      desktopStore.openFolder = {}
     }
   }
 )
@@ -77,28 +77,22 @@ const setupSortable = (app: App) => {
   })
 }
 
-const open = ({ draggedId }: OpenProps = {}) => {
+const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
   visible.value = true
 
   if (draggedId) {
-    /* if (isModalMoveOtherDesktopModal()) {
+    if (isModalMoveOtherDesktopModal()) {
+      console.log('aaaa')
     } else if (isModalMoveModal()) {
-      console.log('bbb')
+      const folderDragged = desktop.value[openFolder.value.index].child.value
+      setData(folderDragged)
     } else {
-      console.log('aaa')
       const draggedDesktop = desktopList.value[dragged.value.deskTopIndex as number].child
-      apps.value = desktopList.value[related.value.deskTopIndex].child[relatedIndex.value]
-      console.log(desktopList.value)
-
-      createChildFolder(apps.value)
-      apps.value.child?.value.push({
-        parentId: apps.value.id,
-        ...draggedDesktop[draggedIndex.value],
-        id: uuidv4()
-      })
-      draggedDesktop.splice(draggedIndex.value, 1)
-    } */
+      setData(draggedDesktop)
+    }
+    setOpenFolder(related.value.id)
   } else {
+    setOpenFolder(openFolderId)
     const openIdex = openFolder.value.index
     apps.value = desktop.value[openIdex as number]
   }
@@ -108,9 +102,30 @@ const open = ({ draggedId }: OpenProps = {}) => {
   setupSortable(apps.value)
 }
 
-const isModalMoveOtherDesktop = () => {
-  return !desktop.value[relatedIndex.value].parentId && !isSameDesktop()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const setData = (dragged: any) => {
+  apps.value = desktopList.value[related.value.deskTopIndex].child[relatedIndex.value]
+  createChildFolder(apps.value)
+  apps.value.child?.value.push({
+    parentId: apps.value.id,
+    ...dragged[draggedIndex.value],
+    id: uuidv4()
+  })
+
+  dragged.splice(draggedIndex.value, 1)
 }
+
+const setOpenFolder = (id = '') => {
+  const desktopList = desktopAppStore.desktopList
+  const currentDesktopIndex = desktopStore.currentDesktop.index as number
+  desktopStore.openFolder.id = id
+  if (currentDesktopIndex >= 0) {
+    desktopStore.openFolder.index = desktopList[currentDesktopIndex].child?.findIndex(
+      (item) => item.id === id
+    )
+  }
+}
+
 const isModalMoveOtherDesktopModal = () => {
   return desktop.value[relatedIndex.value].parentId && !isSameDesktop()
 }
@@ -119,7 +134,8 @@ const isSameDesktop = () => {
 }
 const isModalMoveModal = () => {
   return (
-    desktop.value[draggedIndex.value].parentId &&
+    desktopStore.dragged.inFolder &&
+    desktop.value[openFolder.value.index].child.value[draggedIndex.value].parentId &&
     !desktop.value[relatedIndex.value].parentId &&
     isSameDesktop()
   )

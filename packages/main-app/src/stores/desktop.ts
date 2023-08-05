@@ -18,6 +18,7 @@ interface SortableInfo {
   id?: string
   index?: number
   deskTopIndex?: number
+  inFolder?: boolean
 }
 
 interface OpenFolder {
@@ -33,7 +34,7 @@ interface DesktopDragInfo {
 
 interface State {
   dragged: SortableInfo
-  related: OpenFolder
+  related: SortableInfo
   openFolder: OpenFolder
   currentDesktop: DesktopDragInfo
   oldDesktop: DesktopDragInfo
