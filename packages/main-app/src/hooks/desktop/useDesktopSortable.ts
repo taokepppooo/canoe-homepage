@@ -88,9 +88,9 @@ const excludeElement = (htmlCollection: HTMLCollection, elementToExclude: HTMLEl
 
 const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
   desktopStore.related.desktopIndex = currentDesktopIndex.value
+
   const isSameLevelDragged =
     dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.id
-
   if (isSameLevelDragged) {
     desktopStore.related.index = Array.from(evt.to.children).indexOf(evt.related)
   } else {
@@ -98,6 +98,7 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
       evt.related
     )
   }
+
   desktopStore.related.id = desktop.value[relatedIndex.value].id
   if (desktop.value[relatedIndex.value].parentId) {
     desktopStore.related.inFolder = true
@@ -119,9 +120,11 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
     }, DELAY)
   }
 
-  if (desktopStore.dragStatus !== '1') {
-    return false
+  if (desktopStore.dragStatus === '1') {
+    return true
   }
+
+  return false
 }
 
 // 只适用于首页桌面和首页桌面文件夹内的拖拽
@@ -169,7 +172,7 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
         } else if (isDragToDifferentElementDesktop()) {
           handleDragToDifferentElementDesktop(list)
         } else {
-          swapElements(list)
+          sortElements(list)
         }
       }
 
@@ -225,11 +228,10 @@ const handleDragToDifferentElementDesktop = (list: App[]) => {
   )
   removeDraggedItemFromList(list)
 }
-const swapElements = (list: App[]) => {
-  ;[list[relatedIndex.value], list[draggedIndex.value]] = [
-    list[draggedIndex.value],
-    list[relatedIndex.value]
-  ]
+const sortElements = (list: App[]) => {
+  const draggedApp = list[draggedIndex.value]
+  list.splice(draggedIndex.value, 1)
+  list.splice(relatedIndex.value, 0, draggedApp)
 }
 
 const calculateIntersectionArea = (
