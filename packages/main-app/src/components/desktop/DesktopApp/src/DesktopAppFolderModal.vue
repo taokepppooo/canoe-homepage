@@ -33,14 +33,15 @@ const dragged = computed(() => desktopStore.dragged)
 const related = computed(() => desktopStore.related)
 const draggedIndex = computed(() => desktopStore.dragged.index as number)
 const relatedIndex = computed(() => desktopStore.related.index as number)
+const draggedDesktop = computed(() => desktopList.value[dragged.value.desktopIndex as number].child)
 
 const { isOutside } = useMouseInElement(bodyRef)
 
 watch(
   () => isOutside.value,
   () => {
-    if (desktopStore.isDragging && isOutside.value) {
-      visible.value = false
+    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder) {
+      handleClose()
     }
   }
 )
@@ -81,14 +82,11 @@ const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
   visible.value = true
 
   if (draggedId) {
-    if (isModalMoveOtherDesktopModal()) {
-      console.log('aaaa')
-    } else if (isModalMoveModal()) {
-      const folderDragged = desktop.value[openFolder.value.index].child.value
+    if (isModalMoveModal()) {
+      const folderDragged = draggedDesktop.value[openFolder.value.index as number].child?.value
       setData(folderDragged)
     } else {
-      const draggedDesktop = desktopList.value[dragged.value.deskTopIndex as number].child
-      setData(draggedDesktop)
+      setData(draggedDesktop.value)
     }
     setOpenFolder(related.value.id)
   } else {
@@ -104,7 +102,7 @@ const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const setData = (dragged: any) => {
-  apps.value = desktopList.value[related.value.deskTopIndex].child[relatedIndex.value]
+  apps.value = desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value]
   createChildFolder(apps.value)
   apps.value.child?.value.push({
     parentId: apps.value.id,
@@ -126,18 +124,13 @@ const setOpenFolder = (id = '') => {
   }
 }
 
-const isModalMoveOtherDesktopModal = () => {
-  return desktop.value[relatedIndex.value].parentId && !isSameDesktop()
-}
-const isSameDesktop = () => {
-  return dragged.value.deskTopIndex === related.value.deskTopIndex
-}
 const isModalMoveModal = () => {
   return (
     desktopStore.dragged.inFolder &&
-    desktop.value[openFolder.value.index].child.value[draggedIndex.value].parentId &&
-    !desktop.value[relatedIndex.value].parentId &&
-    isSameDesktop()
+    openFolder.value.index !== undefined &&
+    draggedDesktop.value[openFolder.value.index as number].child?.value[draggedIndex.value]
+      .parentId &&
+    !desktop.value[relatedIndex.value].parentId
   )
 }
 
@@ -158,6 +151,11 @@ const gridStyles = ref({
   'grid-gap': `${appCSSConstant.value.gridGapY} ${appCSSConstant.value.gridGapX}`
 })
 
+const handleClose = () => {
+  visible.value = false
+  desktopStore.openFolder = {}
+}
+
 defineExpose({
   open
 })
@@ -173,6 +171,7 @@ defineExpose({
     align-center
     close-on-press-escape
     destroy-on-close
+    @close="handleClose"
   >
     <template #header>
       <div :class="ns.b('header')">

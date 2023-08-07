@@ -19,8 +19,11 @@ const dragged = computed(() => desktopStore.dragged)
 const related = computed(() => desktopStore.related)
 const currentDesktopIndex = computed(() => desktopStore.currentDesktop.index as number)
 const desktop = computed(() => desktopAppStore.desktopList[currentDesktopIndex.value].child)
+const draggedApp = computed(
+  () => desktopList.value[dragged.value.desktopIndex as number].child[draggedIndex.value as number]
+)
 const relatedApp = computed(
-  () => desktopList.value[related.value.deskTopIndex as number].child[relatedIndex.value as number]
+  () => desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value as number]
 )
 const desktopList = computed(() => desktopAppStore.desktopList)
 let timer: NodeJS.Timeout | null = null
@@ -30,11 +33,12 @@ let moveY = 0
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onMoveHandler = (evt: any, list: App[]) => {
   if (desktopStore.dragStatus !== '0') return
+  // 拖拽元素为文件夹，或者拖拽元素和目标元素的父级相同
   if (
-    list[draggedIndex.value].isFolder ||
-    (list[draggedIndex.value].parentId &&
+    draggedApp.value.isFolder ||
+    (draggedApp.value.parentId &&
       relatedApp.value.parentId &&
-      list[draggedIndex.value].parentId === relatedApp.value.parentId)
+      draggedApp.value.parentId === relatedApp.value.parentId)
   ) {
     desktopStore.dragStatus = '1'
     return
@@ -58,8 +62,9 @@ const onMoveHandler = (evt: any, list: App[]) => {
     const mergeArea = relatedRect.width * relatedRect.height * RATIO
     const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
-    if (intersectionArea > mergeArea) {
-      desktopList.value[related.value.deskTopIndex as number].child[relatedIndex.value].isFolder =
+    // 只有不是弹窗内的拖拽才会触发合并
+    if (!desktopStore.openFolder.id && intersectionArea > mergeArea) {
+      desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value].isFolder =
         true
       mergeFunc()
     }
@@ -68,10 +73,32 @@ const onMoveHandler = (evt: any, list: App[]) => {
   desktopStore.dragStatus = '1'
 }
 
+// 在HTMLCollection中排除某个元素
+const excludeElement = (htmlCollection: HTMLCollection, elementToExclude: HTMLElement) => {
+  const newArray = []
+
+  for (let i = 0; i < htmlCollection.length; i++) {
+    if (htmlCollection[i] !== elementToExclude) {
+      newArray.push(htmlCollection[i])
+    }
+  }
+
+  return newArray
+}
+
 const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
-  desktopStore.related.index = Array.from(evt.to.children).indexOf(evt.related)
+  desktopStore.related.desktopIndex = currentDesktopIndex.value
+  const isSameLevelDragged =
+    dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.id
+
+  if (isSameLevelDragged) {
+    desktopStore.related.index = Array.from(evt.to.children).indexOf(evt.related)
+  } else {
+    desktopStore.related.index = Array.from(excludeElement(evt.to.children, evt.dragged)).indexOf(
+      evt.related
+    )
+  }
   desktopStore.related.id = desktop.value[relatedIndex.value].id
-  desktopStore.related.deskTopIndex = currentDesktopIndex.value
   if (desktop.value[relatedIndex.value].parentId) {
     desktopStore.related.inFolder = true
   } else {
@@ -109,7 +136,7 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
         originalEvent: { offsetX, offsetY }
       } = evt
 
-      desktopStore.dragged.deskTopIndex = desktopStore.currentDesktop.index
+      desktopStore.dragged.desktopIndex = desktopStore.currentDesktop.index
       desktopStore.isDragging = true
       draggedOffsetX = offsetX
       draggedOffsetY = offsetY
@@ -187,11 +214,11 @@ const removeDraggedItemFromList = (list: App[]) => {
   list.splice(draggedIndex.value, 1)
 }
 const isDragToDifferentElementDesktop = () => {
-  return dragged.value.deskTopIndex !== related.value.deskTopIndex
+  return dragged.value.desktopIndex !== related.value.desktopIndex
 }
 const handleDragToDifferentElementDesktop = (list: App[]) => {
   // 拖拽的元素和目标元素不同
-  desktopList.value[related.value.deskTopIndex as number].child.splice(
+  desktopList.value[related.value.desktopIndex as number].child.splice(
     relatedIndex.value,
     0,
     list[draggedIndex.value]

@@ -18,9 +18,11 @@ const desktopHeight = ref('auto')
 const desktopAppStore = useDesktopAppStore()
 const desktopStore = useDesktopStore()
 const currentDesktop = reactive(desktopStore.currentDesktop)
-const desktopList = reactive(desktopAppStore.desktopList)
 
 onMounted(() => {
+  desktopStore.desktopSortableList = []
+  desktopAppStore.desktopList = []
+
   // TODO: 替换数据
   const apps = []
   for (let i = 0; i < 100; i++) {
@@ -46,13 +48,12 @@ onMounted(() => {
     name: '桌面3',
     child: apps.slice(37, 70)
   })
-  desktopStore.currentDesktop.id = desktopList[0].id
+  desktopStore.currentDesktop.id = desktopAppStore.desktopList[0].id
   desktopStore.currentDesktop.index = 0
 
   nextTick(() => {
     initDragged()
   })
-  // useDesktop(desktopHeight, desktopRef, desktopAppStore.apps)
 })
 
 const { desktopChangeDirection } = useDesktopController(carouselRef)
@@ -82,7 +83,9 @@ watch(
 
 const handleChanged = (idx: number) => {
   setDesktopId(idx)
-  desktopStore.currentDesktop.id = desktopList.find((item, index) => index === idx)?.id
+  desktopStore.currentDesktop.id = desktopAppStore.desktopList.find(
+    (item, index) => index === idx
+  )?.id
   desktopStore.currentDesktop.index = idx
 
   initDragged()
@@ -93,14 +96,18 @@ const initDragged = () => {
   const currentDesktopIndex = currentDesktop.index as number
   const element = appsRef.value[currentDesktopId] as HTMLElement
 
-  if (currentDesktopIndex >= 0) {
+  if (
+    currentDesktopIndex >= 0 &&
+    !desktopStore.desktopSortableList.includes(desktopAppStore.desktopList[currentDesktopIndex].id)
+  ) {
     useDesktopSortable({
       element,
-      list: desktopList[currentDesktopIndex].child,
+      list: desktopAppStore.desktopList[currentDesktopIndex].child,
       options: {
         group: 'desktop'
       }
     })
+    desktopStore.desktopSortableList.push(desktopAppStore.desktopList[currentDesktopIndex].id)
   }
 }
 </script>

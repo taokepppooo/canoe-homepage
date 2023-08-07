@@ -9,7 +9,6 @@ export const useDesktopStore = defineStore('desktop', {
     oldDesktop: {},
     isDragging: false,
     dragStatus: '0',
-    oldCurrentDesktopId: '',
     desktopSortableList: []
   })
 })
@@ -17,14 +16,14 @@ export const useDesktopStore = defineStore('desktop', {
 interface SortableInfo {
   id?: string
   index?: number
-  deskTopIndex?: number
+  desktopIndex?: number
   inFolder?: boolean
 }
 
 interface OpenFolder {
   id?: string
   index?: number
-  deskTopIndex?: number
+  desktopIndex?: number
 }
 
 interface DesktopDragInfo {
@@ -40,6 +39,5 @@ interface State {
   oldDesktop: DesktopDragInfo
   isDragging: boolean
   dragStatus: DragStatus
-  oldCurrentDesktopId: string // 上一个桌面id
   desktopSortableList: string[] // 桌面排序列表
 }
