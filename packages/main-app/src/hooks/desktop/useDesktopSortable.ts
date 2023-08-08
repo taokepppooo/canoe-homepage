@@ -85,34 +85,49 @@ const excludeElement = (htmlCollection: HTMLCollection, elementToExclude: HTMLEl
 
   return newArray
 }
+const getIndexOfRelated = (children: HTMLCollection, related: HTMLElement) =>
+  Array.from(children).indexOf(related)
+
+const setDesktopStoreRelated = (index: number) => {
+  const relatedItem = desktop.value[index]
+
+  desktopStore.related.index = index
+  desktopStore.related.id = relatedItem.id
+  desktopStore.related.inFolder = Boolean(relatedItem.parentId)
+}
 
 const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
   desktopStore.related.desktopIndex = currentDesktopIndex.value
 
-  // 跨桌面拖动会导致目标桌面排序新增一个元素，所以需要重新计算目标元素的索引
   const isSameLevelDragged =
     dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.id
+
   if (isSameLevelDragged) {
-    desktopStore.related.index = Array.from(evt.to.children).indexOf(evt.related)
+    const relatedIndex = getIndexOfRelated(evt.to.children, evt.related)
+
+    setDesktopStoreRelated(relatedIndex)
   } else {
-    desktopStore.related.index = Array.from(excludeElement(evt.to.children, evt.dragged)).indexOf(
+    let beforeSortRelatedIndex = getIndexOfRelated(
+      excludeElement(evt.to.children, evt.dragged),
       evt.related
     )
+    const noInsertDraggedElementIndex = getIndexOfRelated(evt.to.children, evt.related)
 
-    // 因为跨桌面时向前向后插入元素时，索引变化不同，所以需要重新计算索引
-    // 跨桌面拖动时，未插入元素的位置索引
-    const noInsertDraggedElementIndex = Array.from(evt.to.children).indexOf(evt.related)
-    const isLeftToRight = noInsertDraggedElementIndex > relatedIndex.value
+    const isLeftToRight =
+      noInsertDraggedElementIndex > beforeSortRelatedIndex &&
+      beforeSortRelatedIndex < desktop.value.length - 1
+
     if (isLeftToRight) {
-      desktopStore.related.index = relatedIndex.value + 1
+      beforeSortRelatedIndex++
     }
-  }
 
-  desktopStore.related.id = desktop.value[relatedIndex.value].id
-  if (desktop.value[relatedIndex.value].parentId) {
-    desktopStore.related.inFolder = true
-  } else {
-    desktopStore.related.inFolder = false
+    setDesktopStoreRelated(beforeSortRelatedIndex)
+
+    if (beforeSortRelatedIndex + 2 === evt.to.children.length && !isLeftToRight) {
+      desktopStore.related.index = evt.to.children.length - 1
+    } else {
+      desktopStore.related.index = beforeSortRelatedIndex
+    }
   }
 
   const isNotSameLocation = moveX !== originalEvent.clientX && moveY !== originalEvent.clientY
@@ -196,7 +211,7 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
 }
 
 const isDragInFolderModal = (fromClass: string, toClass: string) => {
-  return fromClass === toClass && relatedApp.value.parentId
+  return fromClass === toClass && relatedApp.value && relatedApp.value.parentId
 }
 const handleDragInFolderModal = () => {
   const index = desktop.value.findIndex((app) => app.id === relatedApp.value.parentId)
