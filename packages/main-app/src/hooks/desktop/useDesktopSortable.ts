@@ -99,6 +99,7 @@ const setDesktopStoreRelated = (index: number) => {
 const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
   desktopStore.related.desktopIndex = currentDesktopIndex.value
 
+  // 跨桌面拖动会导致目标桌面排序新增一个元素，所以需要重新计算目标元素的索引
   const isSameLevelDragged =
     dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.id
 
@@ -111,6 +112,8 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
       excludeElement(evt.to.children, evt.dragged),
       evt.related
     )
+    // 跨桌面拖动时，未插入元素的位置索引
+    // 因为跨桌面时向前向后插入元素时，索引变化不同，所以需要重新计算索引
     const noInsertDraggedElementIndex = getIndexOfRelated(evt.to.children, evt.related)
 
     const isLeftToRight =
@@ -123,6 +126,8 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
 
     setDesktopStoreRelated(beforeSortRelatedIndex)
 
+    // 跨桌面拖动时，未插入元素的位置索引, 所以未插入元素的位置索引需要加2才等于当前元素长度
+    // 最后元素前和后index都一致所以isLeftToRight判定只有从右到左才执行特殊赋值操作
     if (beforeSortRelatedIndex + 2 === evt.to.children.length && !isLeftToRight) {
       desktopStore.related.index = evt.to.children.length - 1
     } else {
