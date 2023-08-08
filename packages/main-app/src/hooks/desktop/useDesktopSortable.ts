@@ -89,6 +89,7 @@ const excludeElement = (htmlCollection: HTMLCollection, elementToExclude: HTMLEl
 const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
   desktopStore.related.desktopIndex = currentDesktopIndex.value
 
+  // 跨桌面拖动会导致目标桌面排序新增一个元素，所以需要重新计算目标元素的索引
   const isSameLevelDragged =
     dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.id
   if (isSameLevelDragged) {
@@ -97,6 +98,14 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
     desktopStore.related.index = Array.from(excludeElement(evt.to.children, evt.dragged)).indexOf(
       evt.related
     )
+
+    // 因为跨桌面时向前向后插入元素时，索引变化不同，所以需要重新计算索引
+    // 跨桌面拖动时，未插入元素的位置索引
+    const noInsertDraggedElementIndex = Array.from(evt.to.children).indexOf(evt.related)
+    const isLeftToRight = noInsertDraggedElementIndex > relatedIndex.value
+    if (isLeftToRight) {
+      desktopStore.related.index = relatedIndex.value + 1
+    }
   }
 
   desktopStore.related.id = desktop.value[relatedIndex.value].id
