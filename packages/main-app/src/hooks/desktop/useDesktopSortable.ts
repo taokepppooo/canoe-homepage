@@ -34,12 +34,7 @@ let moveY = 0
 const onMoveHandler = (evt: any, list: App[]) => {
   if (desktopStore.dragStatus !== '0') return
   // 拖拽元素为文件夹，或者拖拽元素和目标元素的父级相同
-  if (
-    draggedApp.value.isFolder ||
-    (draggedApp.value.parentId &&
-      relatedApp.value.parentId &&
-      draggedApp.value.parentId === relatedApp.value.parentId)
-  ) {
+  if (draggedApp.value.isFolder || desktopStore.openFolder.id) {
     desktopStore.dragStatus = '1'
     return
   }
@@ -74,18 +69,21 @@ const onMoveHandler = (evt: any, list: App[]) => {
 }
 
 // 在HTMLCollection中排除某个元素
-const excludeElement = (htmlCollection: HTMLCollection, elementToExclude: HTMLElement) => {
-  const newArray = []
+const excludeElement = (
+  htmlCollection: HTMLCollection,
+  elementToExclude: HTMLElement
+): Element[] => {
+  const newArray: Element[] = []
 
   for (let i = 0; i < htmlCollection.length; i++) {
     if (htmlCollection[i] !== elementToExclude) {
-      newArray.push(htmlCollection[i])
+      newArray.push(htmlCollection[i] as Element)
     }
   }
 
   return newArray
 }
-const getIndexOfRelated = (children: HTMLCollection, related: HTMLElement) =>
+const getIndexOfRelated = (children: HTMLCollection | Element[], related: HTMLElement) =>
   Array.from(children).indexOf(related)
 
 const setDesktopStoreRelated = (index: number) => {
@@ -194,7 +192,9 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
       const toClass = evt.to.className
 
       if (desktopStore.dragStatus === '1') {
-        if (isDragInFolderModal(fromClass, toClass)) {
+        if (isModalToModal(list) || isDesktopToFolder()) {
+          handleListAppToFolder(list, evt)
+        } else if (isDragInFolderModal(fromClass, toClass)) {
           handleDragInFolderModal()
         } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
           handleDragFromModalToOutside(list, evt)
@@ -215,6 +215,68 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
   })
 }
 
+const isModalToModal = (list: App[]) => {
+  if (!desktopStore.openFolder.id) {
+    return
+  }
+  if (!list[draggedIndex.value].parentId) {
+    return
+  }
+
+  return isRelatedAppInFolder()
+}
+const isDesktopToFolder = () => {
+  if (!desktopStore.openFolder.id) {
+    return
+  }
+  if (draggedApp.value.parentId) {
+    return
+  }
+
+  return isRelatedAppInFolder()
+}
+// 将sortable接收参数的list中的拖拽app移动到文件夹中
+const handleListAppToFolder = (list: App[], evt: Sortable.SortableEvent) => {
+  if (
+    desktopList &&
+    desktopList.value &&
+    desktopStore &&
+    desktopStore.openFolder &&
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child &&
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[
+      desktopStore.openFolder.index as number
+    ]?.child &&
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[
+      desktopStore.openFolder.index as number
+    ]?.child?.value
+  ) {
+    const draggedApp = list[draggedIndex.value]
+    draggedApp.parentId =
+      desktopList.value[desktopStore.openFolder.desktopIndex as number].child[
+        desktopStore.openFolder.index as number
+      ].id
+
+    desktopList.value[desktopStore.openFolder.desktopIndex as number].child[
+      desktopStore.openFolder.index as number
+    ].child?.value.splice(relatedIndex.value, 0, draggedApp)
+    removeDraggedItemFromList(list)
+    // 解决拖拽文件夹内到外时，会有dom残留的bug
+    evt.to.removeChild(evt.item)
+  }
+}
+const isRelatedAppInFolder = () => {
+  const openFolderList =
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[
+      desktopStore.openFolder.index as number
+    ]?.child?.value || []
+
+  const relatedModalApp =
+    relatedIndex.value <= openFolderList.length - 1
+      ? openFolderList[relatedIndex.value]
+      : openFolderList[relatedIndex.value - 1]
+
+  return relatedModalApp.parentId
+}
 const isDragInFolderModal = (fromClass: string, toClass: string) => {
   return fromClass === toClass && relatedApp.value && relatedApp.value.parentId
 }

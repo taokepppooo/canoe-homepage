@@ -24,6 +24,7 @@ interface OpenFolder {
   id?: string
   index?: number
   desktopIndex?: number
+  isOpen?: boolean
 }
 
 interface DesktopDragInfo {

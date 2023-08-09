@@ -29,19 +29,17 @@ const currentDesktopIndex = computed(() => desktopStore.currentDesktop.index as 
 const desktopList = computed(() => desktopAppStore.desktopList)
 const openFolder = computed(() => desktopStore.openFolder)
 const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
-const dragged = computed(() => desktopStore.dragged)
 const related = computed(() => desktopStore.related)
-const draggedIndex = computed(() => desktopStore.dragged.index as number)
 const relatedIndex = computed(() => desktopStore.related.index as number)
-const draggedDesktop = computed(() => desktopList.value[dragged.value.desktopIndex as number].child)
 
 const { isOutside } = useMouseInElement(bodyRef)
 
 watch(
   () => isOutside.value,
   () => {
-    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder) {
+    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder.isOpen) {
       handleClose()
+      desktopStore.openFolder.isOpen = false
     }
   }
 )
@@ -82,12 +80,7 @@ const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
   visible.value = true
 
   if (draggedId) {
-    if (isModalMoveModal()) {
-      const folderDragged = draggedDesktop.value[openFolder.value.index as number].child?.value
-      setData(folderDragged)
-    } else {
-      setData(draggedDesktop.value)
-    }
+    setData()
     setOpenFolder(related.value.id)
   } else {
     setOpenFolder(openFolderId)
@@ -100,38 +93,22 @@ const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
   setupSortable(apps.value)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const setData = (dragged: any) => {
+const setData = () => {
   apps.value = desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value]
   createChildFolder(apps.value)
-  apps.value.child?.value.push({
-    parentId: apps.value.id,
-    ...dragged[draggedIndex.value],
-    id: uuidv4()
-  })
-
-  dragged.splice(draggedIndex.value, 1)
 }
 
 const setOpenFolder = (id = '') => {
   const desktopList = desktopAppStore.desktopList
   const currentDesktopIndex = desktopStore.currentDesktop.index as number
   desktopStore.openFolder.id = id
+  desktopStore.openFolder.isOpen = true
   if (currentDesktopIndex >= 0) {
     desktopStore.openFolder.index = desktopList[currentDesktopIndex].child?.findIndex(
       (item) => item.id === id
     )
+    desktopStore.openFolder.desktopIndex = currentDesktopIndex
   }
-}
-
-const isModalMoveModal = () => {
-  return (
-    desktopStore.dragged.inFolder &&
-    openFolder.value.index !== undefined &&
-    draggedDesktop.value[openFolder.value.index as number].child?.value[draggedIndex.value]
-      .parentId &&
-    !desktop.value[relatedIndex.value].parentId
-  )
 }
 
 const folderNameInput = (e: Event) => {
