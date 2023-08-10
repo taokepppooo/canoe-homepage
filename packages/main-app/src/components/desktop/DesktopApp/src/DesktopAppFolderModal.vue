@@ -9,8 +9,8 @@ import { useDesktopAppStore } from '@/stores/desktopApp'
 import type { App } from '@/types/desktop'
 
 interface OpenProps {
-  openId?: string
   draggedId?: string
+  openFolderId?: string
 }
 
 const ns = useNamespace('desktop-folder-modal')
@@ -23,16 +23,23 @@ const appsRef = ref()
 const bodyRef = ref()
 const visible = ref(false)
 const desktopHeight = ref('auto')
-const index = ref(0)
 const apps = ref()
+
+const currentDesktopIndex = computed(() => desktopStore.currentDesktop.index as number)
+const desktopList = computed(() => desktopAppStore.desktopList)
+const openFolder = computed(() => desktopStore.openFolder)
+const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
+const related = computed(() => desktopStore.related)
+const relatedIndex = computed(() => desktopStore.related.index as number)
 
 const { isOutside } = useMouseInElement(bodyRef)
 
 watch(
   () => isOutside.value,
   () => {
-    if (desktopStore.isDragging && isOutside.value) {
-      visible.value = false
+    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder.isOpen) {
+      handleClose()
+      desktopStore.openFolder.isOpen = false
     }
   }
 )
@@ -49,8 +56,7 @@ const createChildFolder = (app: App, isFolder = false) => {
       parentId: app.id,
       title: app.title,
       img: app.img,
-      isFolder,
-      isShow: true
+      isFolder
     })
   }
 }
@@ -65,38 +71,21 @@ const setupSortable = (app: App) => {
         list: app.child?.value,
         options: {
           group: 'desktop'
-        },
-        withFolder: false
+        }
       })
   })
 }
 
-const open = ({ openId, draggedId }: OpenProps) => {
+const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
   visible.value = true
-  if (draggedId) {
-    // draggedId存在，拖拽触发打开
-    index.value = desktopAppStore.apps
-      .filter((item) => item.isShow)
-      .findIndex((item) => item.id === desktopStore.relatedId)
-    const relatedIndex = desktopAppStore.apps.findIndex(
-      (item) => item.id === desktopStore.relatedId
-    )
-    apps.value = desktopAppStore.apps[relatedIndex]
-  } else {
-    // openId存在，说明是手动触发打开
-    index.value = desktopAppStore.apps.findIndex((item) => item.id === openId)
-    apps.value = desktopAppStore.apps[index.value]
-  }
-  desktopStore.openFolderIndex = index.value
 
   if (draggedId) {
-    const draggedIndex = desktopAppStore.apps.findIndex((item) => item.id === draggedId)
-    createChildFolder(apps.value)
-    apps.value.child?.value.push({
-      parentId: apps.value.id,
-      ...desktopAppStore.apps[draggedIndex],
-      id: uuidv4()
-    })
+    setData()
+    setOpenFolder(related.value.id)
+  } else {
+    setOpenFolder(openFolderId)
+    const openIdex = openFolder.value.index
+    apps.value = desktop.value[openIdex as number]
   }
 
   apps.value.title = apps.value.child.name
@@ -104,10 +93,30 @@ const open = ({ openId, draggedId }: OpenProps) => {
   setupSortable(apps.value)
 }
 
+const setData = () => {
+  apps.value = desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value]
+  createChildFolder(apps.value)
+}
+
+const setOpenFolder = (id = '') => {
+  const desktopList = desktopAppStore.desktopList
+  const currentDesktopIndex = desktopStore.currentDesktop.index as number
+  desktopStore.openFolder.id = id
+  desktopStore.openFolder.isOpen = true
+  if (currentDesktopIndex >= 0) {
+    desktopStore.openFolder.index = desktopList[currentDesktopIndex].child?.findIndex(
+      (item) => item.id === id
+    )
+    desktopStore.openFolder.desktopIndex = currentDesktopIndex
+  }
+}
+
 const folderNameInput = (e: Event) => {
-  const app = reactive(desktopAppStore.apps[index.value])
-  app.child &&
-    (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
+  if (currentDesktopIndex.value >= 0) {
+    const app = reactive(desktop.value[openFolder.value.index as number])
+    app.child &&
+      (apps.value.child.name = app.title = app.child.name = (e.target as HTMLInputElement).value)
+  }
 }
 
 const debounceFolderNameInput = debounce(folderNameInput, 300)
@@ -118,6 +127,11 @@ const gridStyles = ref({
   'grid-template-rows': `repeat(auto-fill, ${appSize.value.height})`,
   'grid-gap': `${appCSSConstant.value.gridGapY} ${appCSSConstant.value.gridGapX}`
 })
+
+const handleClose = () => {
+  visible.value = false
+  desktopStore.openFolder = {}
+}
 
 defineExpose({
   open
@@ -134,6 +148,7 @@ defineExpose({
     align-center
     close-on-press-escape
     destroy-on-close
+    @close="handleClose"
   >
     <template #header>
       <div :class="ns.b('header')">

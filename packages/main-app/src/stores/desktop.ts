@@ -2,18 +2,43 @@ import type { DragStatus } from '@/types/desktop'
 
 export const useDesktopStore = defineStore('desktop', {
   state: (): State => ({
-    draggedId: '',
-    relatedId: '',
+    related: {},
+    dragged: {},
+    openFolder: {},
+    currentDesktop: {},
+    oldDesktop: {},
     isDragging: false,
-    openFolderIndex: null, // 当前打开的文件的索引
-    dragStatus: '0' // 0: 初始化 1: 拖拽 2: 合并文件夹
+    dragStatus: '0',
+    desktopSortableList: []
   })
 })
 
+interface SortableInfo {
+  id?: string
+  index?: number
+  desktopIndex?: number
+  inFolder?: boolean
+}
+
+interface OpenFolder {
+  id?: string
+  index?: number
+  desktopIndex?: number
+  isOpen?: boolean
+}
+
+interface DesktopDragInfo {
+  id?: string
+  index?: number // 在list中所在的索引
+}
+
 interface State {
-  draggedId: string | null
-  relatedId: string | null
+  dragged: SortableInfo
+  related: SortableInfo
+  openFolder: OpenFolder
+  currentDesktop: DesktopDragInfo
+  oldDesktop: DesktopDragInfo
   isDragging: boolean
-  openFolderIndex: number | null
   dragStatus: DragStatus
+  desktopSortableList: string[] // 桌面排序列表
 }

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { nextTick } from 'process'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
@@ -20,24 +19,18 @@ const app: Ref<App> | undefined = inject('app')
 const appModalRef = ref<{ [key: string]: any }>({})
 
 const handleClick = () => {
-  // 指定desktopStore.relatedId，用于DesktopAppFolderModal的if判断
-  if (app?.value.id !== desktopStore.relatedId) {
-    desktopStore.relatedId = app?.value.id || ''
-  }
   nextTick(() => {
-    app?.value.id && appModalRef.value[app?.value.id].open({ openId: app?.value.id })
+    app?.value.id && appModalRef.value[app?.value.id].open({ openFolderId: app?.value.id })
   })
 }
 
 watch(
   () => desktopStore.dragStatus,
   () => {
-    if (
-      desktopStore.dragStatus === '2' &&
-      appModalRef.value &&
-      desktopStore.relatedId === app?.value.id
-    ) {
-      app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.draggedId })
+    if (desktopStore.dragStatus === '2' && appModalRef.value) {
+      // 清除合并时未在弹窗之前合理清除的问题
+      desktopStore.dragStatus = '0'
+      app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.dragged.id })
     }
   }
 )
