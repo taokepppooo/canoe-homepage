@@ -6,11 +6,18 @@ import { defaultNamespace } from '@/hooks/useNamespace'
 import type { App, DesktopSortOptions, MoveOriginalEvent } from '@/types/desktop'
 import type Sortable from 'sortablejs'
 
+interface SortableOptions {
+  originalEvent: MouseEvent
+}
+
+type SortableEventOption = Sortable.MoveEvent & SortableOptions & Sortable.SortableEvent
+
 const desktopStore = useDesktopStore()
 const desktopAppStore = useDesktopAppStore()
 const { appSize } = useDesktopGlobal()
 
 const DELAY = 700
+const IN_MODAL_DELAY = 100
 let draggedOffsetX = 0
 let draggedOffsetY = 0
 const draggedIndex = computed(() => desktopStore.dragged.index as number)
@@ -30,11 +37,10 @@ let timer: NodeJS.Timeout | null = null
 let moveX = 0
 let moveY = 0
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const onMoveHandler = (evt: any, list: App[]) => {
+const onMoveHandler = (evt: SortableEventOption, list: App[]) => {
   if (desktopStore.dragStatus !== '0') return
   // 拖拽元素为文件夹，或者拖拽元素和目标元素的父级相同
-  if (draggedApp.value.isFolder || desktopStore.openFolder.id) {
+  if (draggedApp.value.isFolder) {
     desktopStore.dragStatus = '1'
     return
   }
@@ -58,7 +64,7 @@ const onMoveHandler = (evt: any, list: App[]) => {
     const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
     // 只有不是弹窗内的拖拽才会触发合并
-    if (!desktopStore.openFolder.id && intersectionArea > mergeArea) {
+    if (!desktopStore.openFolder.isOpen && intersectionArea > mergeArea) {
       desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value].isFolder =
         true
       mergeFunc()
@@ -94,12 +100,12 @@ const setDesktopStoreRelated = (index: number) => {
   desktopStore.related.inFolder = Boolean(relatedItem.parentId)
 }
 
-const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list: App[]) => {
+const onMove = (evt: SortableEventOption, originalEvent: MoveOriginalEvent, list: App[]) => {
   desktopStore.related.desktopIndex = currentDesktopIndex.value
 
   // 跨桌面拖动会导致目标桌面排序新增一个元素，所以需要重新计算目标元素的索引
   const isSameLevelDragged =
-    dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.id
+    dragged.value.desktopIndex === related.value.desktopIndex || desktopStore.openFolder.isOpen
 
   if (isSameLevelDragged) {
     const relatedIndex = getIndexOfRelated(evt.to.children, evt.related)
@@ -142,9 +148,15 @@ const onMove = (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent, list:
     moveY = originalEvent.clientY
   }
   if (!timer) {
-    timer = setTimeout(() => {
-      onMoveHandler(evt, list)
-    }, DELAY)
+    if (desktopStore.openFolder.isOpen) {
+      timer = setTimeout(() => {
+        onMoveHandler(evt, list)
+      }, IN_MODAL_DELAY)
+    } else {
+      timer = setTimeout(() => {
+        onMoveHandler(evt, list)
+      }, DELAY)
+    }
   }
 
   if (desktopStore.dragStatus === '1') {
@@ -160,8 +172,7 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
     ...options,
     forceFallback: false,
     sort: true,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onStart: (evt: any) => {
+    onStart: (evt: SortableEventOption) => {
       const {
         originalEvent: { offsetX, offsetY }
       } = evt
@@ -182,7 +193,7 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
         desktopStore.dragged.inFolder = false
       }
     },
-    onMove: (evt: Sortable.MoveEvent, originalEvent: MoveOriginalEvent) =>
+    onMove: (evt: SortableEventOption, originalEvent: MoveOriginalEvent) =>
       onMove(evt, originalEvent, list),
     onEnd: (evt: Sortable.SortableEvent) => {
       desktopStore.isDragging = false
@@ -192,7 +203,9 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
       const toClass = evt.to.className
 
       if (desktopStore.dragStatus === '1') {
-        if (isModalToModal(list) || isDesktopToFolder()) {
+        if (isModalToModal(list)) {
+          handleModalToModal(list, evt)
+        } else if (isDesktopToFolder()) {
           handleListAppToFolder(list, evt)
         } else if (isDragInFolderModal(fromClass, toClass)) {
           handleDragInFolderModal()
@@ -215,8 +228,18 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
   })
 }
 
+const removeEmptyFolder = (parentId: string) => {
+  const child = desktopList.value[currentDesktopIndex.value]?.child
+  if (child) {
+    const emptyFolderIndex = child.findIndex((item) => item.id === parentId)
+    const modalChild = child[emptyFolderIndex]?.child?.value || []
+    if (emptyFolderIndex !== -1 && modalChild.length < 1) {
+      child.splice(emptyFolderIndex, 1)
+    }
+  }
+}
 const isModalToModal = (list: App[]) => {
-  if (!desktopStore.openFolder.id) {
+  if (!desktopStore.openFolder.isOpen) {
     return
   }
   if (!list[draggedIndex.value].parentId) {
@@ -225,8 +248,13 @@ const isModalToModal = (list: App[]) => {
 
   return isRelatedAppInFolder()
 }
+const handleModalToModal = (list: App[], evt: Sortable.SortableEvent) => {
+  const parentId = list[draggedIndex.value].parentId as string
+  handleListAppToFolder(list, evt)
+  removeEmptyFolder(parentId)
+}
 const isDesktopToFolder = () => {
-  if (!desktopStore.openFolder.id) {
+  if (!desktopStore.openFolder.isOpen) {
     return
   }
   if (draggedApp.value.parentId) {
@@ -297,12 +325,14 @@ const isDragFromModalToOutside = (fromClass: string, toClass: string, list: App[
   )
 }
 const handleDragFromModalToOutside = (list: App[], evt: Sortable.SortableEvent) => {
+  const parentId = list[draggedIndex.value].parentId as string
   delete list[draggedIndex.value].parentId
 
   evt.newIndex && desktop.value.splice(evt.newIndex, 0, list[draggedIndex.value])
   removeDraggedItemFromList(list)
   // 解决拖拽文件夹内到外时，会有dom残留的bug
   evt.to.removeChild(evt.item)
+  removeEmptyFolder(parentId)
 }
 const removeDraggedItemFromList = (list: App[]) => {
   list.splice(draggedIndex.value, 1)
@@ -326,10 +356,8 @@ const sortElements = (list: App[]) => {
 }
 
 const calculateIntersectionArea = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  originalEvent: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  relatedRect: any
+  originalEvent: MouseEvent,
+  relatedRect: Sortable.DOMRect
 ): number => {
   const originalClientX = originalEvent.clientX - draggedOffsetX
   const originalClientY = originalEvent.clientY - draggedOffsetY
