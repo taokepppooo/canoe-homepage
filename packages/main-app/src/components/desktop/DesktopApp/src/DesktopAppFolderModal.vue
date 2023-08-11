@@ -39,7 +39,6 @@ watch(
   () => {
     if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder.isOpen) {
       handleClose()
-      desktopStore.openFolder.isOpen = false
     }
   }
 )
@@ -130,7 +129,7 @@ const gridStyles = ref({
 
 const handleClose = () => {
   visible.value = false
-  desktopStore.openFolder = {}
+  desktopStore.openFolder.isOpen = false
 }
 
 defineExpose({
