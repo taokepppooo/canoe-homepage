@@ -102,7 +102,11 @@ const containsElement = (htmlCollection: HTMLCollection, element: HTMLElement) =
 const getIndexOfRelated = (children: HTMLCollection | Element[], related: HTMLElement) =>
   Array.from(children).indexOf(related)
 
-const setDesktopStoreRelated = (evt: SortableEventOption, index: number) => {
+const setDesktopStoreRelated = (
+  evt: SortableEventOption,
+  index: number,
+  isSameLevelDragged = true
+) => {
   const draggedItem =
     desktopList.value[dragged.value.desktopIndex as number]?.child[draggedIndex.value as number]
 
@@ -110,15 +114,20 @@ const setDesktopStoreRelated = (evt: SortableEventOption, index: number) => {
     newItem = desktop.value[index]
     relatedList = desktop.value
   } else {
-    newItem = desktop.value[desktopStore.openFolder.index as number]?.child?.value[index] || null
-    relatedList = desktop.value[desktopStore.openFolder.index as number]?.child?.value || []
+    const openFolderIndex = desktop.value.findIndex(
+      (item) => item.id === desktopStore.openFolder.id
+    )
+    newItem = desktop.value[openFolderIndex as number]?.child?.value[index] || null
+    relatedList =
+      openFolderIndex > 0 ? desktop.value[openFolderIndex as number]?.child?.value || [] : []
   }
 
   // length未插入和插入再拖拽
   if (
-    !newItem &&
+    isSameLevelDragged &&
     draggedItem &&
-    relatedList?.findIndex((item) => item.id === draggedItem.id) === -1
+    relatedList?.findIndex((item) => item.id === draggedItem.id) === -1 &&
+    desktopStore.openFolder.isOpen
   ) {
     newItem = {
       id: draggedItem.id,
@@ -132,7 +141,6 @@ const setDesktopStoreRelated = (evt: SortableEventOption, index: number) => {
     }
 
     isDeleteDraggedApp = true
-    desktopStore.dragStatus = '1'
   }
 
   if (newItem) {
@@ -152,7 +160,7 @@ const onMove = (evt: SortableEventOption, originalEvent: MoveOriginalEvent, list
   isDeleteDraggedApp = false
 
   if (isSameLevelDragged) {
-    setDesktopStoreRelated(evt, relatedIndex)
+    setDesktopStoreRelated(evt, relatedIndex, false)
   } else {
     // 列表中不存在拖拽
     if (!containsElement(evt.to.children, evt.dragged)) {
@@ -236,6 +244,9 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
     onMove: (evt: SortableEventOption, originalEvent: MoveOriginalEvent) =>
       onMove(evt, originalEvent, list),
     onEnd: (evt: Sortable.SortableEvent) => {
+      const openFolderIndex = desktop.value.findIndex(
+        (item) => item.id === desktopStore.openFolder.id
+      )
       desktopStore.isDragging = false
 
       // 使用更具描述性的变量名
@@ -247,10 +258,10 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
           relatedList.splice(relatedIndex.value, 0, newItem as App)
           removeDraggedItemFromList(list)
           isDeleteDraggedApp = false
-        } else if (isModalToModal(list)) {
-          handleModalToModal(list, evt)
-        } else if (isDesktopToFolder()) {
-          handleListAppToFolder(list, evt)
+        } else if (isModalToModal(list, openFolderIndex)) {
+          handleModalToModal(list, evt, openFolderIndex)
+        } else if (isDesktopToFolder(openFolderIndex)) {
+          handleListAppToFolder(list, evt, openFolderIndex)
         } else if (isDragInFolderModal(fromClass, toClass)) {
           handleDragInFolderModal()
         } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
@@ -282,7 +293,7 @@ const removeEmptyFolder = (parentId: string) => {
     }
   }
 }
-const isModalToModal = (list: App[]) => {
+const isModalToModal = (list: App[], openFolderIndex: number) => {
   if (!desktopStore.openFolder.isOpen) {
     return
   }
@@ -290,14 +301,14 @@ const isModalToModal = (list: App[]) => {
     return
   }
 
-  return isRelatedAppInFolder()
+  return isRelatedAppInFolder(openFolderIndex)
 }
-const handleModalToModal = (list: App[], evt: Sortable.SortableEvent) => {
+const handleModalToModal = (list: App[], evt: Sortable.SortableEvent, openFolderIndex: number) => {
   const parentId = list[draggedIndex.value].parentId as string
-  handleListAppToFolder(list, evt)
+  handleListAppToFolder(list, evt, openFolderIndex)
   removeEmptyFolder(parentId)
 }
-const isDesktopToFolder = () => {
+const isDesktopToFolder = (openFolderIndex: number) => {
   if (!desktopStore.openFolder.isOpen) {
     return
   }
@@ -305,42 +316,41 @@ const isDesktopToFolder = () => {
     return
   }
 
-  return isRelatedAppInFolder()
+  return isRelatedAppInFolder(openFolderIndex)
 }
 // 将sortable接收参数的list中的拖拽app移动到文件夹中
-const handleListAppToFolder = (list: App[], evt: Sortable.SortableEvent) => {
+const handleListAppToFolder = (
+  list: App[],
+  evt: Sortable.SortableEvent,
+  openFolderIndex: number
+) => {
   if (
     desktopList &&
     desktopList.value &&
     desktopStore &&
     desktopStore.openFolder &&
     desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child &&
-    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[
-      desktopStore.openFolder.index as number
-    ]?.child &&
-    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[
-      desktopStore.openFolder.index as number
-    ]?.child?.value
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[openFolderIndex]
+      ?.child &&
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[openFolderIndex]?.child
+      ?.value
   ) {
     const draggedApp = list[draggedIndex.value]
     draggedApp.parentId =
-      desktopList.value[desktopStore.openFolder.desktopIndex as number].child[
-        desktopStore.openFolder.index as number
-      ].id
+      desktopList.value[desktopStore.openFolder.desktopIndex as number].child[openFolderIndex].id
 
     desktopList.value[desktopStore.openFolder.desktopIndex as number].child[
-      desktopStore.openFolder.index as number
+      openFolderIndex
     ].child?.value.splice(relatedIndex.value, 0, draggedApp)
     removeDraggedItemFromList(list)
     // 解决拖拽文件夹内到外时，会有dom残留的bug
     evt.to.removeChild(evt.item)
   }
 }
-const isRelatedAppInFolder = () => {
+const isRelatedAppInFolder = (openFolderIndex: number) => {
   const openFolderList =
-    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[
-      desktopStore.openFolder.index as number
-    ]?.child?.value || []
+    desktopList.value[desktopStore.openFolder.desktopIndex as number]?.child[openFolderIndex]?.child
+      ?.value || []
 
   const relatedModalApp =
     relatedIndex.value <= openFolderList.length - 1
