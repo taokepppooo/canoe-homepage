@@ -22,7 +22,7 @@ interface SortableInfo {
 
 interface OpenFolder {
   id?: string
-  index?: number
+  index?: number // NOTE: index在数据删除或增加时不准确，需要根据id查询索引
   desktopIndex?: number
   isOpen?: boolean
 }

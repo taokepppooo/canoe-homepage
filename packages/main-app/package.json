@@ -37,7 +37,7 @@
     "pinia": "^2.0.32",
     "sortablejs": "^1.15.0",
     "uuid": "^9.0.0",
-    "vite-plugin-vue-devtools": "^1.0.0-alpha.2",
+    "vite-plugin-vue-devtools": "1.0.0-rc.0",
     "vue": "^3.3.4",
     "vue-router": "^4.2.2"
   },
