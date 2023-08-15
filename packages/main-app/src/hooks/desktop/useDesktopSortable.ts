@@ -115,7 +115,6 @@ const setDesktopStoreRelated = (
   isSameLevelDragged = true
 ) => {
   const draggedItem = list[draggedIndex.value]
-  console.log(draggedItem, 'draggedItem')
 
   if (evt.to.className === APP_CLASS_NAME) {
     newItem = desktop.value[index]
@@ -269,6 +268,9 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
           removeDraggedItemFromList(list)
           evt.to.removeChild(evt.item)
           isDeleteDraggedApp = false
+          if (isModalToModal(fromClass, toClass) && list.length === 0) {
+            removeEmptyFolder()
+          }
         } else if (isDesktopToFolder(list, openFolderIndex)) {
           handleListAppToFolder(list, evt, openFolderIndex)
         } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
@@ -290,35 +292,29 @@ export const useDesktopSortable = ({ element, list, options }: DesktopSortOption
   })
 }
 
-const removeEmptyFolder = (parentId: string) => {
-  const child = desktopList.value[currentDesktopIndex.value]?.child
+const removeEmptyFolder = () => {
+  const child = desktopList.value[dragged.value.desktopIndex as number]?.child
   if (child) {
-    const emptyFolderIndex = child.findIndex((item) => item.id === parentId)
-    const modalChild = child[emptyFolderIndex]?.child?.value || []
-    if (emptyFolderIndex !== -1 && modalChild.length < 1) {
+    const emptyFolderIndex = child.findIndex((item) => item.child && item.child.value.length === 0)
+    if (emptyFolderIndex > -1) {
       child.splice(emptyFolderIndex, 1)
     }
   }
 }
-const isModalToModal = (list: App[], openFolderIndex: number) => {
+const isModalToModal = (fromClass: string, toClass: string) => {
   if (!desktopStore.openFolder.isOpen) {
-    return false
+    return
   }
 
-  return isRelatedAppInFolder(openFolderIndex) !== list[draggedIndex.value].parentId
-}
-const handleModalToModal = (list: App[], evt: Sortable.SortableEvent, openFolderIndex: number) => {
-  const parentId = list[draggedIndex.value].parentId as string
-  handleListAppToFolder(list, evt, openFolderIndex)
-  removeEmptyFolder(parentId)
+  return fromClass === FOLDER_CLASS_NAME && toClass === FOLDER_CLASS_NAME
 }
 const isDesktopToFolder = (list: App[], openFolderIndex: number) => {
   if (!desktopStore.openFolder.isOpen) {
-    return false
+    return
   }
 
-  if (list[draggedIndex.value].parentId) {
-    return false
+  if (list[draggedIndex.value] && list[draggedIndex.value].parentId) {
+    return
   }
 
   return isRelatedAppInFolder(openFolderIndex)
@@ -372,14 +368,13 @@ const isDragFromModalToOutside = (fromClass: string, toClass: string, list: App[
   )
 }
 const handleDragFromModalToOutside = (list: App[], evt: Sortable.SortableEvent) => {
-  const parentId = list[draggedIndex.value].parentId as string
   delete list[draggedIndex.value].parentId
 
   evt.newIndex && desktop.value.splice(evt.newIndex, 0, list[draggedIndex.value])
   removeDraggedItemFromList(list)
   // 解决拖拽文件夹内到外时，会有dom残留的bug
   evt.to.removeChild(evt.item)
-  removeEmptyFolder(parentId)
+  removeEmptyFolder()
 }
 const removeDraggedItemFromList = (list: App[]) => {
   list.splice(draggedIndex.value, 1)
