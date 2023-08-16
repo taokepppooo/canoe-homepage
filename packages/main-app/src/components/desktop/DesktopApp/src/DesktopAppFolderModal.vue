@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { debounce } from 'lodash-es'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopSortable } from '@/hooks/desktop/useDesktopSortable'
+import { useDesktopAppFolderModalTimerOutside } from '@/hooks/desktopApp/useDesktopAppFolderModal'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
@@ -32,12 +33,13 @@ const desktop = computed(() => desktopList.value[currentDesktopIndex.value].chil
 const related = computed(() => desktopStore.related)
 const relatedIndex = computed(() => desktopStore.related.index as number)
 
-const { isOutside } = useMouseInElement(bodyRef)
+const { isTimerOutside } = useDesktopAppFolderModalTimerOutside(bodyRef)
 
 watch(
-  () => isOutside.value,
+  () => isTimerOutside.value,
   () => {
-    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder.isOpen) {
+    console.log(isTimerOutside.value, 'desktopAppFolderModalOutside.value')
+    if (isTimerOutside.value && desktopStore.openFolder.isOpen) {
       handleClose()
     }
   }
