@@ -127,7 +127,8 @@ const setDesktopStoreRelated = (
       id: draggedItem.id,
       title: draggedItem.title,
       img: draggedItem.img,
-      isFolder: false,
+      isFolder: draggedItem.isFolder,
+      child: draggedItem.child ? draggedItem.child : undefined,
       parentId: evt.to.className === APP_CLASS_NAME ? undefined : relatedList[0]?.parentId
     }
 

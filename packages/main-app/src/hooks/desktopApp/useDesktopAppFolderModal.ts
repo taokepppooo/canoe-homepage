@@ -1,27 +1,44 @@
 import { debounce } from 'lodash-es'
 import { useDesktopStore } from '@/stores/desktop'
+import { useDesktopAppFolderModalStore } from '@/stores/desktopAppFolderModal'
 
 const desktopStore = useDesktopStore()
+const desktopAppFolderModalStore = useDesktopAppFolderModalStore()
 
-let oldElementX = 0
-let oldElementY = 0
+let oldX = 0
+let oldY = 0
 const isTimerOutside = ref(false)
+
+const DELAY = 500
+const debounceOutside = debounce((x: Ref<number>, y: Ref<number>) => {
+  const isDebounceOutside =
+    oldX === x.value && oldY === y.value && !desktopAppFolderModalStore.isFirstMergeOpen
+  isTimerOutside.value = isDebounceOutside
+}, DELAY)
 
 export const useDesktopAppFolderModalTimerOutside = (
   refer: Ref
 ): {
   isTimerOutside: Ref<boolean>
 } => {
-  const { elementX, elementY, isOutside } = useMouseInElement(refer)
+  const { x, y, isOutside } = useMouseInElement(refer)
 
   watch(
-    () => [elementX.value, elementY.value],
+    () => [x.value, y.value],
     () => {
-      oldElementX = elementX.value
-      oldElementY = elementY.value
+      oldX = x.value
+      oldY = y.value
 
       if (isOutside.value && desktopStore.isDragging) {
-        debounceOutside(elementX, elementY)
+        const isDebounceOutside =
+          oldX === x.value && oldY === y.value && !desktopAppFolderModalStore.isFirstMergeOpen
+
+        if (!isDebounceOutside && desktopAppFolderModalStore.isFirstMergeOpen) {
+          desktopAppFolderModalStore.isFirstMergeOpen = false
+        }
+        debounceOutside(x, y)
+      } else {
+        debounceOutside.cancel()
       }
     }
   )
@@ -30,12 +47,3 @@ export const useDesktopAppFolderModalTimerOutside = (
     isTimerOutside
   }
 }
-
-const DELAY = 500
-const debounceOutside = debounce((elementX: Ref<number>, elementY: Ref<number>) => {
-  if (oldElementX === elementX.value && oldElementY === elementY.value) {
-    isTimerOutside.value = true
-  } else {
-    isTimerOutside.value = false
-  }
-}, DELAY)
