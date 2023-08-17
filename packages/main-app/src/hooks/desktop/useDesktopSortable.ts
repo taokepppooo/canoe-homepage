@@ -1,7 +1,6 @@
 import { useSortable } from '@/hooks/useSortable'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
-import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { defaultNamespace } from '@/hooks/useNamespace'
 import type { App, DesktopSortOptions, MoveOriginalEvent } from '@/types/desktop'
 import type Sortable from 'sortablejs'
@@ -14,7 +13,6 @@ type SortableEventOption = Sortable.MoveEvent & SortableOptions & Sortable.Sorta
 
 const desktopStore = useDesktopStore()
 const desktopAppStore = useDesktopAppStore()
-const { appSize } = useDesktopGlobal()
 
 const APP_CLASS_NAME = `${defaultNamespace}-desktop-controller__apps`
 const FOLDER_CLASS_NAME = `${defaultNamespace}-desktop-folder-modal-body__desktop__apps`
@@ -30,9 +28,6 @@ const desktop = computed(() => desktopAppStore.desktopList[currentDesktopIndex.v
 const draggedApp = computed(
   () => desktopList.value[dragged.value.desktopIndex as number].child[draggedIndex.value as number]
 )
-const relatedApp = computed(
-  () => desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value as number]
-)
 const desktopList = computed(() => desktopAppStore.desktopList)
 let timer: NodeJS.Timeout | null = null
 let moveX = 0
@@ -41,7 +36,7 @@ let isDeleteDraggedApp = false
 let newItem: App | null = null
 let relatedList: App[] = []
 
-const onMoveHandler = (evt: SortableEventOption, list: App[]) => {
+const onMoveHandler = (evt: SortableEventOption) => {
   if (desktopStore.dragStatus !== '0') return
   // 拖拽元素为文件夹，或者拖拽元素和目标元素的父级相同
   if (draggedApp.value.isFolder) {
@@ -55,28 +50,20 @@ const onMoveHandler = (evt: SortableEventOption, list: App[]) => {
     })
   }
 
-  // 目标为文件夹
-  if (relatedApp.value && relatedApp.value.isFolder) {
-    // 拖拽为文件
-    if (!list[draggedIndex.value].isFolder) {
-      mergeFunc()
-    }
-  } else {
-    const { originalEvent, relatedRect } = evt
-    const RATIO = 0.5
-    const mergeArea = relatedRect.width * relatedRect.height * RATIO
-    const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
+  const { originalEvent, relatedRect } = evt
+  const RATIO = 0.5
+  const mergeArea = relatedRect.width * relatedRect.height * RATIO
+  const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
 
-    // 只有不是弹窗内的拖拽才会触发合并
-    if (
-      !desktopStore.openFolder.isOpen &&
-      desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value] &&
-      intersectionArea > mergeArea
-    ) {
-      desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value].isFolder =
-        true
-      mergeFunc()
-    }
+  // 只有不是弹窗内的拖拽才会触发合并
+  if (
+    !desktopStore.openFolder.isOpen &&
+    desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value] &&
+    intersectionArea > mergeArea
+  ) {
+    desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value].isFolder =
+      true
+    mergeFunc()
   }
 
   desktopStore.dragStatus = '1'
@@ -140,7 +127,8 @@ const setDesktopStoreRelated = (
       id: draggedItem.id,
       title: draggedItem.title,
       img: draggedItem.img,
-      isFolder: false,
+      isFolder: draggedItem.isFolder,
+      child: draggedItem.child ? draggedItem.child : undefined,
       parentId: evt.to.className === APP_CLASS_NAME ? undefined : relatedList[0]?.parentId
     }
 
@@ -212,7 +200,7 @@ const onMove = (evt: SortableEventOption, originalEvent: MoveOriginalEvent, list
   }
   if (!timer) {
     timer = setTimeout(() => {
-      onMoveHandler(evt, list)
+      onMoveHandler(evt)
     }, DELAY)
   }
 
@@ -401,29 +389,39 @@ const calculateIntersectionArea = (
   originalEvent: MouseEvent,
   relatedRect: Sortable.DOMRect
 ): number => {
-  const originalClientX = originalEvent.clientX - draggedOffsetX
-  const originalClientY = originalEvent.clientY - draggedOffsetY
-  const relatedX = relatedRect.left
-  const relatedY = relatedRect.top
+  relatedRect.height - draggedOffsetY
+  const moveLeft = originalEvent.clientX - draggedOffsetX
+  const moveRight = moveLeft + relatedRect.width
+  const moveTop = originalEvent.clientY - draggedOffsetY
+  const moveBottom = moveTop + relatedRect.height
+  const clientX = originalEvent.clientX
+  const clientY = originalEvent.clientY
+  const {
+    left: relatedLeft,
+    right: relatedRight,
+    top: relatedTop,
+    bottom: relatedBottom
+  } = relatedRect
 
-  // 计算两个正方形相交的面积
-  const overlapX = Math.max(
-    0,
-    Math.min(
-      originalClientX + parseInt(appSize.value.width),
-      relatedX + parseInt(appSize.value.width)
-    ) - Math.max(originalClientX, relatedX)
-  )
+  if (
+    clientX > relatedLeft &&
+    clientX < relatedRight &&
+    clientY > relatedTop &&
+    clientY < relatedBottom
+  ) {
+    // 计算两个正方形相交的面积
+    const overlapX = Math.max(
+      0,
+      Math.min(moveRight, relatedRight) - Math.max(moveLeft, relatedLeft)
+    )
 
-  const overlapY = Math.max(
-    0,
-    Math.min(
-      originalClientY + parseInt(appSize.value.height),
-      relatedY + parseInt(appSize.value.height)
-    ) - Math.max(originalClientY, relatedY)
-  )
+    const overlapY = Math.max(
+      0,
+      Math.min(moveBottom, relatedBottom) - Math.max(moveTop, relatedTop)
+    )
 
-  const intersectionArea = overlapX * overlapY
+    return overlapX * overlapY
+  }
 
-  return intersectionArea
+  return 0
 }

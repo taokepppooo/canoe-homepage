@@ -3,9 +3,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { debounce } from 'lodash-es'
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopSortable } from '@/hooks/desktop/useDesktopSortable'
+import { useDesktopAppFolderModalTimerOutside } from '@/hooks/desktopApp/useDesktopAppFolderModal'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
+import { useDesktopAppFolderModalStore } from '@/stores/desktopAppFolderModal'
 import type { App } from '@/types/desktop'
 
 interface OpenProps {
@@ -17,6 +19,7 @@ const ns = useNamespace('desktop-folder-modal')
 const { appCSSConstant, appSize } = useDesktopGlobal()
 const desktopStore = useDesktopStore()
 const desktopAppStore = useDesktopAppStore()
+const desktopAppFolderModalStore = useDesktopAppFolderModalStore()
 
 const desktopRef = ref()
 const appsRef = ref()
@@ -32,16 +35,15 @@ const desktop = computed(() => desktopList.value[currentDesktopIndex.value].chil
 const related = computed(() => desktopStore.related)
 const relatedIndex = computed(() => desktopStore.related.index as number)
 
-const { isOutside } = useMouseInElement(bodyRef)
+const { isTimerOutside } = useDesktopAppFolderModalTimerOutside(bodyRef)
 
-watch(
-  () => isOutside.value,
-  () => {
-    if (desktopStore.isDragging && isOutside.value && desktopStore.openFolder.isOpen) {
+watchEffect(() => {
+  if (isTimerOutside.value && desktopStore.openFolder.isOpen) {
+    nextTick(() => {
       handleClose()
-    }
+    })
   }
-)
+})
 
 const createChildFolder = (app: App, isFolder = false) => {
   if (!app.child) {
@@ -76,6 +78,7 @@ const setupSortable = (app: App) => {
 }
 
 const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
+  isTimerOutside.value = false
   visible.value = true
 
   if (draggedId) {
@@ -130,6 +133,7 @@ const gridStyles = ref({
 const handleClose = () => {
   visible.value = false
   desktopStore.openFolder.isOpen = false
+  desktopAppFolderModalStore.isFirstMergeOpen = false
 }
 
 defineExpose({

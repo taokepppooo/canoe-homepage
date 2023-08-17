@@ -2,9 +2,11 @@
 import { useNamespace } from '@/hooks/useNamespace'
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
+import { useDesktopAppFolderModalStore } from '@/stores/desktopAppFolderModal'
 import type { App } from '@/types/desktop'
 
 const ns = useNamespace('desktop-app-folder')
+const desktopAppFolderModalStore = useDesktopAppFolderModalStore()
 const desktopStore = useDesktopStore()
 const { appCSSConstant } = useDesktopGlobal()
 
@@ -30,6 +32,7 @@ watch(
     if (desktopStore.dragStatus === '2' && appModalRef.value) {
       // 清除合并时未在弹窗之前合理清除的问题
       desktopStore.dragStatus = '0'
+      desktopAppFolderModalStore.isFirstMergeOpen = true
       app?.value.id && appModalRef.value[app?.value.id].open({ draggedId: desktopStore.dragged.id })
     }
   }
