@@ -1,12 +1,13 @@
 import { useDesktopStore } from '@/stores/desktop'
 import { FOLDER_CLASS_NAME, APP_CLASS_NAME } from '@/types/desktopSortableConstant'
+import { excludeElement, containsElement } from '@/utils/dom'
 import { useDesktopSortableReactive } from './useDesktopSortableReactive'
 import type Sortable from 'sortablejs'
 import type { SortableEventOption } from '@/types/sortable'
-import type { App, MoveOriginalEvent } from '@/types/desktop'
+import type { App, MoveOriginalEvent, SortableConstant } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
-let {
+const {
   dragged,
   related,
   desktop,
@@ -14,88 +15,43 @@ let {
   relatedIndex,
   currentDesktopIndex,
   draggedApp,
-  desktopList,
-  isDeleteDraggedApp,
-  moveX,
-  moveY,
-  timer,
-  newItem,
-  relatedList,
-  draggedOffsetX,
-  draggedOffsetY
+  desktopList
 } = useDesktopSortableReactive()
 
 const DELAY = 700
 
 export const useDesktopSortableMove = () => {
-  const move = (evt: SortableEventOption, originalEvent: MoveOriginalEvent, list: App[]) => {
+  const move = (
+    evt: SortableEventOption,
+    originalEvent: MoveOriginalEvent,
+    list: App[],
+    constant: SortableConstant
+  ) => {
+    const { from, to, related: sortRelated } = evt
+    const fromClassName = from.className
+    const toClassName = to.className
+    // 拖拽元素从弹窗到桌面
+    const isModalToDesktop = fromClassName === FOLDER_CLASS_NAME && toClassName === APP_CLASS_NAME
+    const isModalToModal = fromClassName === FOLDER_CLASS_NAME && toClassName === FOLDER_CLASS_NAME
+
     desktopStore.related.desktopIndex = currentDesktopIndex.value
+    constant.isDeleteDraggedApp = false
+
+    const relatedIndex = getIndexOfRelated(to.children, sortRelated)
+
     // 跨桌面拖动会导致目标桌面排序新增一个元素，所以需要重新计算目标元素的索引
     const isSameLevelDragged =
-      dragged.value.desktopIndex === related.value.desktopIndex &&
-      evt.to.className === evt.from.className
-    let relatedIndex = getIndexOfRelated(evt.to.children, evt.related)
-    isDeleteDraggedApp.value = false
-    // 拖拽元素从弹窗到桌面
-    const isModalToDesktop =
-      evt.from.className === FOLDER_CLASS_NAME && evt.to.className === APP_CLASS_NAME
-    const isModalToModal =
-      evt.from.className === FOLDER_CLASS_NAME && evt.to.className === FOLDER_CLASS_NAME
+      dragged.value.desktopIndex === related.value.desktopIndex && toClassName === fromClassName
 
     if ((isSameLevelDragged && !isModalToModal) || isModalToDesktop) {
-      setDesktopStoreRelated(list, evt, relatedIndex, false)
+      setDesktopStoreRelated(list, evt, relatedIndex, constant, false)
     } else {
-      // 列表中不存在拖拽
-      if (!containsElement(evt.to.children, evt.dragged)) {
-        let beforeSortRelatedIndex = getIndexOfRelated(
-          excludeElement(evt.to.children, evt.dragged),
-          evt.related
-        )
-
-        if (evt.willInsertAfter) {
-          beforeSortRelatedIndex++
-        }
-
-        setDesktopStoreRelated(list, evt, beforeSortRelatedIndex)
-      } else {
-        const draggedIndex = getIndexOfRelated(evt.to.children, evt.dragged)
-        const isLeftToRight = draggedIndex < relatedIndex
-
-        if (isLeftToRight) {
-          relatedIndex = evt.willInsertAfter ? relatedIndex : relatedIndex - 1
-        } else {
-          relatedIndex = evt.willInsertAfter ? relatedIndex + 1 : relatedIndex
-        }
-
-        setDesktopStoreRelated(list, evt, relatedIndex)
-      }
+      handleNonSameLevelDragged(evt, relatedIndex, constant, list)
     }
 
-    if (desktopStore.openFolder && desktopStore.openFolder.isOpen) {
-      desktopStore.dragStatus = '1'
-      return true
-    }
+    updateDragStatus(evt, originalEvent, constant)
 
-    const isNotSameLocation =
-      moveX.value !== originalEvent.clientX && moveY.value !== originalEvent.clientY
-
-    if (timer.value && isNotSameLocation) {
-      clearTimeout(timer.value)
-      timer.value = null
-      moveX.value = originalEvent.clientX
-      moveY.value = originalEvent.clientY
-    }
-    if (!timer.value) {
-      timer.value = setTimeout(() => {
-        onMoveHandler(evt)
-      }, DELAY)
-    }
-
-    if (desktopStore.dragStatus === '1') {
-      return true
-    }
-
-    return false
+    return desktopStore.dragStatus === '1' ? true : false
   }
 
   return {
@@ -103,24 +59,86 @@ export const useDesktopSortableMove = () => {
   }
 }
 
-const onMoveHandler = (evt: SortableEventOption) => {
-  if (desktopStore.dragStatus !== '0') return
-  // 拖拽元素为文件夹，或者拖拽元素和目标元素的父级相同
-  if (draggedApp.value.isFolder) {
+const handleNonSameLevelDragged = (
+  evt: SortableEventOption,
+  relatedIndex: number,
+  constant: SortableConstant,
+  list: App[]
+) => {
+  const { to, related: sortRelated, dragged: sortDragged } = evt
+
+  // 列表中不存在拖拽
+  if (!containsElement(to.children, sortDragged)) {
+    let beforeSortRelatedIndex = getIndexOfRelated(
+      excludeElement(to.children, sortDragged),
+      sortRelated
+    )
+
+    if (evt.willInsertAfter) {
+      beforeSortRelatedIndex++
+    }
+
+    setDesktopStoreRelated(list, evt, beforeSortRelatedIndex, constant)
+  } else {
+    const draggedIndex = getIndexOfRelated(evt.to.children, sortDragged)
+    const isLeftToRight = draggedIndex < relatedIndex
+
+    if (isLeftToRight) {
+      relatedIndex = evt.willInsertAfter ? relatedIndex : relatedIndex - 1
+    } else {
+      relatedIndex = evt.willInsertAfter ? relatedIndex + 1 : relatedIndex
+    }
+
+    setDesktopStoreRelated(list, evt, relatedIndex, constant)
+  }
+}
+
+const updateDragStatus = (
+  evt: SortableEventOption,
+  originalEvent: MoveOriginalEvent,
+  constant: SortableConstant
+) => {
+  if (desktopStore.openFolder && desktopStore.openFolder.isOpen) {
+    desktopStore.dragStatus = '1'
+    return true
+  }
+
+  const isNotSameLocation =
+    constant.moveX !== originalEvent.clientX && constant.moveY !== originalEvent.clientY
+
+  if (constant.timer && isNotSameLocation) {
+    clearTimeout(constant.timer)
+    constant.timer = null
+    constant.moveX = originalEvent.clientX
+    constant.moveY = originalEvent.clientY
+  }
+  if (!constant.timer) {
+    constant.timer = setTimeout(() => {
+      onMoveHandler(evt, constant)
+    }, DELAY)
+  }
+}
+
+const onMoveHandler = (evt: SortableEventOption, constant: SortableConstant) => {
+  if (desktopStore.dragStatus !== '0' || draggedApp.value.isFolder) {
     desktopStore.dragStatus = '1'
     return
   }
 
-  const mergeFunc = () => {
+  if (shouldMerge(evt, constant)) {
     nextTick(() => {
       desktopStore.dragStatus = '2'
     })
   }
 
+  desktopStore.dragStatus = '1'
+}
+
+const shouldMerge = (evt: SortableEventOption, constant: SortableConstant) => {
   const { originalEvent, relatedRect } = evt
   const RATIO = 0.5
   const mergeArea = relatedRect.width * relatedRect.height * RATIO
-  const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect)
+  const intersectionArea = calculateIntersectionArea(originalEvent, relatedRect, constant)
 
   // 只有不是弹窗内的拖拽才会触发合并
   if (
@@ -130,35 +148,12 @@ const onMoveHandler = (evt: SortableEventOption) => {
   ) {
     desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value].isFolder =
       true
-    mergeFunc()
+    return true
   }
 
-  desktopStore.dragStatus = '1'
-}
-
-// 在HTMLCollection中排除某个元素
-const excludeElement = (
-  htmlCollection: HTMLCollection,
-  elementToExclude: HTMLElement
-): Element[] => {
-  const newArray: Element[] = []
-
-  for (let i = 0; i < htmlCollection.length; i++) {
-    if (htmlCollection[i] !== elementToExclude) {
-      newArray.push(htmlCollection[i] as Element)
-    }
-  }
-
-  return newArray
-}
-const containsElement = (htmlCollection: HTMLCollection, element: HTMLElement) => {
-  for (let i = 0; i < htmlCollection.length; i++) {
-    if (htmlCollection[i] === element) {
-      return true
-    }
-  }
   return false
 }
+
 const getIndexOfRelated = (children: HTMLCollection | Element[], related: HTMLElement) =>
   Array.from(children).indexOf(related)
 
@@ -166,57 +161,79 @@ const setDesktopStoreRelated = (
   list: App[],
   evt: SortableEventOption,
   index: number,
+  constant: SortableConstant,
   isSameLevelDragged = true
 ) => {
   const draggedItem = list[draggedIndex.value]
 
   if (evt.to.className === APP_CLASS_NAME) {
-    newItem.value = desktop.value[index]
-    relatedList = desktop.value
+    setConstantsForApp(constant, index)
   } else {
-    const openFolderIndex = desktop.value.findIndex(
-      (item) => item.id === desktopStore.openFolder.id
-    )
-    newItem.value = desktop.value[openFolderIndex as number]?.child?.value[index] || null
-    relatedList =
-      openFolderIndex > -1 ? desktop.value[openFolderIndex as number]?.child?.value || [] : []
+    setConstantsForNonApp(constant, index)
   }
 
-  // length未插入和插入再拖拽
-  if (
+  if (shouldUpdateNewItem(constant, draggedItem, isSameLevelDragged)) {
+    updateNewItem(constant, draggedItem, evt)
+  }
+
+  if (constant.newItem) {
+    updateDesktopStoreRelated(constant, index)
+  }
+}
+
+const setConstantsForApp = (constant: SortableConstant, index: number) => {
+  constant.newItem = desktop.value[index]
+  constant.relatedList = desktop.value
+}
+
+const setConstantsForNonApp = (constant: SortableConstant, index: number) => {
+  const openFolderIndex = desktop.value.findIndex((item) => item.id === desktopStore.openFolder.id)
+  constant.newItem = desktop.value[openFolderIndex as number]?.child?.value[index] || null
+  constant.relatedList =
+    openFolderIndex > -1 ? desktop.value[openFolderIndex as number]?.child?.value || [] : []
+}
+
+const shouldUpdateNewItem = (
+  constant: SortableConstant,
+  draggedItem: App,
+  isSameLevelDragged: boolean
+) => {
+  return (
     isSameLevelDragged &&
-    !newItem.value &&
+    !constant.newItem &&
     draggedItem &&
-    relatedList?.findIndex((item) => item.id === draggedItem.id) === -1 &&
+    constant.relatedList?.findIndex((item) => item.id === draggedItem.id) === -1 &&
     (desktopStore.openFolder.isOpen || dragged.value.desktopIndex !== related.value.desktopIndex)
-  ) {
-    newItem.value = {
-      id: draggedItem.id,
-      title: draggedItem.title,
-      img: draggedItem.img,
-      isFolder: draggedItem.isFolder,
-      child: draggedItem.child ? draggedItem.child : undefined,
-      parentId: evt.to.className === APP_CLASS_NAME ? undefined : relatedList[0]?.parentId
-    }
+  )
+}
 
-    isDeleteDraggedApp.value = true
+const updateNewItem = (constant: SortableConstant, draggedItem: App, evt: SortableEventOption) => {
+  constant.newItem = {
+    id: draggedItem.id,
+    title: draggedItem.title,
+    img: draggedItem.img,
+    isFolder: draggedItem.isFolder,
+    child: draggedItem.child ? draggedItem.child : undefined,
+    parentId: evt.to.className === APP_CLASS_NAME ? undefined : constant.relatedList[0]?.parentId
   }
+  constant.isDeleteDraggedApp = true
+}
 
-  if (newItem.value) {
-    desktopStore.related.index = index
-    desktopStore.related.id = newItem.value.id
-    desktopStore.related.inFolder = Boolean(newItem.value.parentId)
-  }
+const updateDesktopStoreRelated = (constant: SortableConstant, index: number) => {
+  desktopStore.related.index = index
+  desktopStore.related.id = constant.newItem?.id
+  desktopStore.related.inFolder = Boolean(constant.newItem?.parentId)
 }
 
 const calculateIntersectionArea = (
   originalEvent: MouseEvent,
-  relatedRect: Sortable.DOMRect
+  relatedRect: Sortable.DOMRect,
+  constant: SortableConstant
 ): number => {
-  relatedRect.height - draggedOffsetY.value
-  const moveLeft = originalEvent.clientX - draggedOffsetX.value
+  relatedRect.height - constant.draggedOffsetY
+  const moveLeft = originalEvent.clientX - constant.draggedOffsetX
   const moveRight = moveLeft + relatedRect.width
-  const moveTop = originalEvent.clientY - draggedOffsetY.value
+  const moveTop = originalEvent.clientY - constant.draggedOffsetY
   const moveBottom = moveTop + relatedRect.height
   const clientX = originalEvent.clientX
   const clientY = originalEvent.clientY

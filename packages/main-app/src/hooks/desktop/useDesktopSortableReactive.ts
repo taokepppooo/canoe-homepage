@@ -17,14 +17,6 @@ export const useDesktopSortableReactive = () => {
       desktopList.value[dragged.value.desktopIndex as number].child[draggedIndex.value as number]
   )
   const desktopList = computed(() => desktopAppStore.desktopList)
-  const draggedOffsetX = ref(0)
-  const draggedOffsetY = ref(0)
-  const moveX = ref(0)
-  const moveY = ref(0)
-  const isDeleteDraggedApp = ref(false)
-  const timer = ref<NodeJS.Timeout | null>(null)
-  const newItem = ref<App | null>(null)
-  const relatedList = reactive<App[]>([])
 
   return {
     draggedIndex,
@@ -34,14 +26,6 @@ export const useDesktopSortableReactive = () => {
     currentDesktopIndex,
     desktop,
     draggedApp,
-    desktopList,
-    draggedOffsetX,
-    draggedOffsetY,
-    moveX,
-    moveY,
-    isDeleteDraggedApp,
-    timer,
-    newItem,
-    relatedList
+    desktopList
   }
 }

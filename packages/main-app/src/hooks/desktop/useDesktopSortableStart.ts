@@ -1,32 +1,32 @@
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopSortableReactive } from './useDesktopSortableReactive'
 import type { SortableEventOption } from '@/types/sortable'
-import type { App } from '@/types/desktop'
+import type { App, SortableConstant } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
-const { draggedIndex, draggedOffsetX, draggedOffsetY } = useDesktopSortableReactive()
+const { draggedIndex } = useDesktopSortableReactive()
 
 export const useDesktopSortableStart = () => {
-  const start = (evt: SortableEventOption, list: App[]) => {
+  const start = (evt: SortableEventOption, list: App[], constant: SortableConstant) => {
     const {
-      originalEvent: { offsetX, offsetY }
+      originalEvent: { offsetX, offsetY },
+      oldIndex
     } = evt
 
-    desktopStore.dragged.desktopIndex = desktopStore.currentDesktop.index
-    desktopStore.isDragging = true
-    draggedOffsetX.value = offsetX
-    draggedOffsetY.value = offsetY
-    desktopStore.dragged.index = evt.oldIndex
+    const { dragged } = desktopStore
 
-    const draggedId = list[draggedIndex.value].id || ''
-    if (draggedId !== desktopStore.dragged.id) {
-      desktopStore.dragged.id = draggedId
+    dragged.desktopIndex = desktopStore.currentDesktop.index
+    dragged.index = oldIndex
+    desktopStore.isDragging = true
+    constant.draggedOffsetX = offsetX
+    constant.draggedOffsetY = offsetY
+    const draggedId = list[draggedIndex.value].id
+
+    if (draggedId !== dragged.id) {
+      dragged.id = draggedId
     }
-    if (list[draggedIndex.value].parentId) {
-      desktopStore.dragged.inFolder = true
-    } else {
-      desktopStore.dragged.inFolder = false
-    }
+
+    dragged.inFolder = Boolean(list[draggedIndex.value].parentId)
   }
 
   return {

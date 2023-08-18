@@ -2,24 +2,14 @@ import { useDesktopStore } from '@/stores/desktop'
 import { FOLDER_CLASS_NAME, APP_CLASS_NAME } from '@/types/desktopSortableConstant'
 import { useDesktopSortableReactive } from './useDesktopSortableReactive'
 import type Sortable from 'sortablejs'
-import type { App } from '@/types/desktop'
+import type { App, SortableConstant } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
-const {
-  dragged,
-  related,
-  desktop,
-  draggedIndex,
-  relatedIndex,
-  desktopList,
-  isDeleteDraggedApp,
-  timer,
-  newItem,
-  relatedList
-} = useDesktopSortableReactive()
+const { dragged, related, desktop, draggedIndex, relatedIndex, desktopList } =
+  useDesktopSortableReactive()
 
 export const useDesktopSortableEnd = () => {
-  const end = (evt: Sortable.SortableEvent, list: App[]) => {
+  const end = (evt: Sortable.SortableEvent, list: App[], constant: SortableConstant) => {
     const openFolderIndex = desktop.value.findIndex(
       (item) => item.id === desktopStore.openFolder.id
     )
@@ -30,35 +20,59 @@ export const useDesktopSortableEnd = () => {
     const toClass = evt.to.className
 
     if (desktopStore.dragStatus === '1') {
-      if (isDeleteDraggedApp) {
-        relatedList.splice(relatedIndex.value, 0, newItem.value as App)
-        removeDraggedItemFromList(list)
-        evt.to.removeChild(evt.item)
-        isDeleteDraggedApp.value = false
-        if (isModalToModal(fromClass, toClass) && list.length === 0) {
-          removeEmptyFolder()
-        }
-      } else if (isDesktopToFolder(list, openFolderIndex)) {
-        handleListAppToFolder(list, evt, openFolderIndex)
-      } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
-        handleDragFromModalToOutside(list, evt)
-      } else if (isDragToDifferentElementDesktop()) {
-        handleDragToDifferentElementDesktop(list)
-      } else {
-        sortElements(list)
-      }
+      handleDragStatusOne(evt, list, constant, openFolderIndex, fromClass, toClass)
     }
 
-    desktopStore.dragStatus = '0'
-
-    if (timer.value) {
-      clearTimeout(timer.value)
-      timer.value = null
-    }
+    resetDragStatusAndTimer(constant)
   }
 
   return {
     end
+  }
+}
+
+const handleDragStatusOne = (
+  evt: Sortable.SortableEvent,
+  list: App[],
+  constant: SortableConstant,
+  openFolderIndex: number,
+  fromClass: string,
+  toClass: string
+) => {
+  if (constant.isDeleteDraggedApp) {
+    handleDeleteDraggedApp(evt, list, constant, fromClass, toClass)
+  } else if (isDesktopToFolder(list, openFolderIndex)) {
+    handleListAppToFolder(list, evt, openFolderIndex)
+  } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
+    handleDragFromModalToOutside(list, evt)
+  } else if (isDragToDifferentElementDesktop()) {
+    handleDragToDifferentElementDesktop(list)
+  } else {
+    sortElements(list)
+  }
+}
+
+const handleDeleteDraggedApp = (
+  evt: Sortable.SortableEvent,
+  list: App[],
+  constant: SortableConstant,
+  fromClass: string,
+  toClass: string
+) => {
+  constant.relatedList.splice(relatedIndex.value, 0, constant.newItem as App)
+  removeDraggedItemFromList(list)
+  evt.to.removeChild(evt.item)
+  constant.isDeleteDraggedApp = false
+  if (isModalToModal(fromClass, toClass) && list.length === 0) {
+    removeEmptyFolder()
+  }
+}
+
+const resetDragStatusAndTimer = (constant: SortableConstant) => {
+  desktopStore.dragStatus = '0'
+  if (constant.timer) {
+    clearTimeout(constant.timer)
+    constant.timer = null
   }
 }
 

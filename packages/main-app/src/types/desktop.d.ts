@@ -44,3 +44,14 @@ export type MoveOriginalEvent = Event & MouseEvent
 export type Direction = 'left' | 'right' | ''
 
 export type DeskTopDirection = 'prev' | 'next' | ''
+
+export interface SortableConstant {
+  draggedOffsetX: number
+  draggedOffsetY: number
+  moveX: number
+  moveY: number
+  isDeleteDraggedApp: boolean
+  timer: NodeJS.Timeout | null
+  newItem: App | null
+  relatedList: App[]
+}
