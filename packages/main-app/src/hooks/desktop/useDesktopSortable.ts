@@ -22,8 +22,8 @@ const constant: SortableConstant = {
 }
 
 // 只适用于首页桌面和首页桌面文件夹内的拖拽
-export const useDesktopSortable = ({ element, list, options }: DesktopSortOptions) => {
-  useSortable(element, {
+export const useDesktopSortable = ({ element, list, options }: DesktopSortOptions): Sortable => {
+  return useSortable(element, {
     ...options,
     forceFallback: false,
     sort: true,

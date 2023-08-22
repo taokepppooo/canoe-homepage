@@ -11,16 +11,22 @@ const isTimerOutside = ref(false)
 
 const DELAY = 500
 const debounceOutside = debounce((x: Ref<number>, y: Ref<number>) => {
-  const isDebounceOutside =
-    oldX === x.value && oldY === y.value && !desktopAppFolderModalStore.isFirstMergeOpen
-  isTimerOutside.value = isDebounceOutside
+  isTimerOutside.value = isDebounceOutside(x, y)
 }, DELAY)
+
+const isDebounceOutside = (x: Ref<number>, y: Ref<number>) => {
+  return oldX === x.value && oldY === y.value && !desktopAppFolderModalStore.isFirstMergeOpen
+}
 
 export const useDesktopAppFolderModalTimerOutside = (
   refer: Ref
 ): {
   isTimerOutside: Ref<boolean>
 } => {
+  oldX = 0
+  oldY = 0
+  isTimerOutside.value = false
+  debounceOutside.cancel()
   const { x, y, isOutside } = useMouseInElement(refer)
 
   watch(
@@ -30,12 +36,10 @@ export const useDesktopAppFolderModalTimerOutside = (
       oldY = y.value
 
       if (isOutside.value && desktopStore.isDragging) {
-        const isDebounceOutside =
-          oldX === x.value && oldY === y.value && !desktopAppFolderModalStore.isFirstMergeOpen
-
-        if (!isDebounceOutside && desktopAppFolderModalStore.isFirstMergeOpen) {
+        if (!isDebounceOutside(x, y) && desktopAppFolderModalStore.isFirstMergeOpen) {
           desktopAppFolderModalStore.isFirstMergeOpen = false
         }
+
         debounceOutside(x, y)
       } else {
         debounceOutside.cancel()

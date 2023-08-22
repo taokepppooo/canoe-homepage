@@ -1,3 +1,5 @@
+import type Sortable from 'sortablejs'
+
 export interface AppCSSConstant {
   borderRadius: string
   gridGapX: string
@@ -54,4 +56,41 @@ export interface SortableConstant {
   timer: NodeJS.Timeout | null
   newItem: App | null
   relatedList: App[]
+}
+
+export interface SortableInfo {
+  id?: string
+  index?: number
+  desktopIndex?: number
+  parentId?: string
+  inFolder?: boolean
+}
+
+export interface OpenFolder {
+  id?: string
+  index?: number // NOTE: index在数据删除或增加时不准确，需要根据id查询索引
+  desktopIndex?: number
+  isOpen?: boolean
+}
+
+export interface DesktopDragInfo {
+  id?: string
+  index?: number // 在list中所在的索引
+}
+
+export interface SortableOpen {
+  id: string
+  sortable: Sortable | null
+}
+
+export interface State {
+  dragged: SortableInfo
+  related: SortableInfo
+  openFolder: OpenFolder
+  currentDesktop: DesktopDragInfo
+  oldDesktop: DesktopDragInfo
+  isDragging: boolean
+  dragStatus: DragStatus
+  desktopSortableList: string[] // 桌面排序列表
+  desktopSortableOpenList: SortableOpen[]
 }
