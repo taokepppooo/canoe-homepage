@@ -9,7 +9,6 @@ export const useDesktopStore = defineStore('desktop', {
     oldDesktop: {},
     isDragging: false,
     dragStatus: '0',
-    desktopSortableList: [],
-    desktopSortableOpenList: []
+    desktopSortableList: []
   })
 })

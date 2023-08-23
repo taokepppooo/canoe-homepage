@@ -1,5 +1,3 @@
-import type Sortable from 'sortablejs'
-
 export interface AppCSSConstant {
   borderRadius: string
   gridGapX: string
@@ -78,11 +76,6 @@ export interface DesktopDragInfo {
   index?: number // 在list中所在的索引
 }
 
-export interface SortableOpen {
-  id: string
-  sortable: Sortable | null
-}
-
 export interface State {
   dragged: SortableInfo
   related: SortableInfo
@@ -92,5 +85,4 @@ export interface State {
   isDragging: boolean
   dragStatus: DragStatus
   desktopSortableList: string[] // 桌面排序列表
-  desktopSortableOpenList: SortableOpen[]
 }

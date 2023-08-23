@@ -8,7 +8,7 @@ import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
 import { useDesktopAppFolderModalStore } from '@/stores/desktopAppFolderModal'
-import type { App, SortableOpen } from '@/types/desktop'
+import type { App } from '@/types/desktop'
 
 interface OpenProps {
   draggedId?: string
@@ -34,8 +34,7 @@ const openFolder = computed(() => desktopStore.openFolder)
 const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
 const related = computed(() => desktopStore.related)
 const relatedIndex = computed(() => desktopStore.related.index as number)
-
-const { isTimerOutside } = useDesktopAppFolderModalTimerOutside(bodyRef)
+const isTimerOutside = ref(false)
 
 watchEffect(() => {
   if (isTimerOutside.value && desktopStore.openFolder.isOpen) {
@@ -66,48 +65,19 @@ const setupSortable = (app: App) => {
   nextTick(() => {
     const element = appsRef.value
 
-    if (app.child) {
-      const sortable = useDesktopSortable({
+    app.child &&
+      useDesktopSortable({
         element,
         list: app.child?.value,
         options: {
           group: 'desktop'
         }
       })
-
-      const item: SortableOpen = {
-        id: app.id || '',
-        sortable
-      }
-
-      const itemIndex = desktopStore.desktopSortableOpenList.findIndex((item) => item.id === app.id)
-
-      if (desktopStore.desktopSortableOpenList.length === 2) {
-        if (itemIndex > 0) {
-          const [foundItem] = desktopStore.desktopSortableOpenList.splice(itemIndex, 1)
-          desktopStore.desktopSortableOpenList.unshift(foundItem)
-        } else {
-          const openSortable = desktopStore.desktopSortableOpenList[0].sortable
-          if (openSortable) {
-            openSortable.destroy()
-          }
-
-          desktopStore.desktopSortableOpenList.splice(0, 1)
-          desktopStore.desktopSortableOpenList.push(item)
-        }
-      } else {
-        if (itemIndex === -1) {
-          desktopStore.desktopSortableOpenList.push(item)
-        }
-      }
-
-      console.log(sortable)
-      console.log(desktopStore.desktopSortableOpenList, 'desktopStore.desktopSortableOpenList')
-    }
   })
 }
 
 const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
+  isTimerOutside.value = useDesktopAppFolderModalTimerOutside(bodyRef).isTimerOutside.value
   isTimerOutside.value = false
   visible.value = true
 

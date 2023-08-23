@@ -23,10 +23,6 @@ export const useDesktopAppFolderModalTimerOutside = (
 ): {
   isTimerOutside: Ref<boolean>
 } => {
-  oldX = 0
-  oldY = 0
-  isTimerOutside.value = false
-  debounceOutside.cancel()
   const { x, y, isOutside } = useMouseInElement(refer)
 
   watch(
