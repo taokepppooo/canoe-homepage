@@ -1,4 +1,4 @@
-import type { DragStatus } from '@/types/desktop'
+import type { State } from '@/types/desktop'
 
 export const useDesktopStore = defineStore('desktop', {
   state: (): State => ({
@@ -12,33 +12,3 @@ export const useDesktopStore = defineStore('desktop', {
     desktopSortableList: []
   })
 })
-
-interface SortableInfo {
-  id?: string
-  index?: number
-  desktopIndex?: number
-  inFolder?: boolean
-}
-
-interface OpenFolder {
-  id?: string
-  index?: number // NOTE: index在数据删除或增加时不准确，需要根据id查询索引
-  desktopIndex?: number
-  isOpen?: boolean
-}
-
-interface DesktopDragInfo {
-  id?: string
-  index?: number // 在list中所在的索引
-}
-
-interface State {
-  dragged: SortableInfo
-  related: SortableInfo
-  openFolder: OpenFolder
-  currentDesktop: DesktopDragInfo
-  oldDesktop: DesktopDragInfo
-  isDragging: boolean
-  dragStatus: DragStatus
-  desktopSortableList: string[] // 桌面排序列表
-}

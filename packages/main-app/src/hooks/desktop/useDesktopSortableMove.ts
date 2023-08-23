@@ -223,6 +223,9 @@ const updateDesktopStoreRelated = (constant: SortableConstant, index: number) =>
   desktopStore.related.index = index
   desktopStore.related.id = constant.newItem?.id
   desktopStore.related.inFolder = Boolean(constant.newItem?.parentId)
+  if (constant.newItem?.parentId) {
+    desktopStore.related.parentId = constant.newItem?.parentId
+  }
 }
 
 const calculateIntersectionArea = (

@@ -34,8 +34,7 @@ const openFolder = computed(() => desktopStore.openFolder)
 const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
 const related = computed(() => desktopStore.related)
 const relatedIndex = computed(() => desktopStore.related.index as number)
-
-const { isTimerOutside } = useDesktopAppFolderModalTimerOutside(bodyRef)
+const isTimerOutside = ref(false)
 
 watchEffect(() => {
   if (isTimerOutside.value && desktopStore.openFolder.isOpen) {
@@ -78,6 +77,7 @@ const setupSortable = (app: App) => {
 }
 
 const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
+  isTimerOutside.value = useDesktopAppFolderModalTimerOutside(bodyRef).isTimerOutside.value
   isTimerOutside.value = false
   visible.value = true
 

@@ -21,9 +21,15 @@ export const useDesktopSortableStart = () => {
     constant.draggedOffsetX = offsetX
     constant.draggedOffsetY = offsetY
     const draggedId = list[draggedIndex.value].id
+    const parentId = list[draggedIndex.value].parentId
 
     if (draggedId !== dragged.id) {
       dragged.id = draggedId
+
+      if (parentId) {
+        dragged.parentId = parentId
+        dragged.inFolder = true
+      }
     }
 
     dragged.inFolder = Boolean(list[draggedIndex.value].parentId)
