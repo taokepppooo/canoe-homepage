@@ -41,6 +41,10 @@ const handleDragStatusOne = (
 ) => {
   if (constant.isDeleteDraggedApp) {
     handleDeleteDraggedApp(evt, list, constant, fromClass, toClass)
+    constant.isDeleteDraggedApp = false
+  } else if (constant.isModalNotLast) {
+    handleDeleteDraggedApp(evt, list, constant, fromClass, toClass)
+    constant.isModalNotLast = false
   } else if (isDesktopToFolder(list, openFolderIndex)) {
     handleListAppToFolder(list, evt, openFolderIndex)
   } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
@@ -60,9 +64,9 @@ const handleDeleteDraggedApp = (
   toClass: string
 ) => {
   constant.relatedList.splice(relatedIndex.value, 0, constant.newItem as App)
+  constant.newItem = null
   removeDraggedItemFromList(list)
   evt.to.removeChild(evt.item)
-  constant.isDeleteDraggedApp = false
   if (isModalToModal(fromClass, toClass) && list.length === 0) {
     removeEmptyFolder()
   }

@@ -212,10 +212,16 @@ const updateNewItem = (constant: SortableConstant, draggedItem: App, evt: Sortab
     id: draggedItem.id,
     title: draggedItem.title,
     img: draggedItem.img,
-    isFolder: draggedItem.isFolder,
-    child: draggedItem.child ? draggedItem.child : undefined,
-    parentId: evt.to.className === APP_CLASS_NAME ? undefined : constant.relatedList[0]?.parentId
+    isFolder: draggedItem.isFolder
   }
+
+  if (evt.to.className !== APP_CLASS_NAME) {
+    constant.newItem.parentId = constant.relatedList[0]?.parentId
+  }
+  if (draggedItem.child) {
+    constant.newItem.child = draggedItem.child
+  }
+
   constant.isDeleteDraggedApp = true
 }
 

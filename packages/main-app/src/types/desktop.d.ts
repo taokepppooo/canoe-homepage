@@ -51,6 +51,7 @@ export interface SortableConstant {
   moveX: number
   moveY: number
   isDeleteDraggedApp: boolean
+  isModalNotLast: boolean
   timer: NodeJS.Timeout | null
   newItem: App | null
   relatedList: App[]
@@ -81,7 +82,6 @@ export interface State {
   related: SortableInfo
   openFolder: OpenFolder
   currentDesktop: DesktopDragInfo
-  oldDesktop: DesktopDragInfo
   isDragging: boolean
   dragStatus: DragStatus
   desktopSortableList: string[] // 桌面排序列表

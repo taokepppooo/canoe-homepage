@@ -1,6 +1,5 @@
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
-import type { App } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
 const desktopAppStore = useDesktopAppStore()

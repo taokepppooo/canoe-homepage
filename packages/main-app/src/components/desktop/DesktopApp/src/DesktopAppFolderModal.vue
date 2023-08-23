@@ -7,7 +7,6 @@ import { useDesktopAppFolderModalTimerOutside } from '@/hooks/desktopApp/useDesk
 import { useDesktopGlobal } from '@/hooks/useGlobal'
 import { useDesktopStore } from '@/stores/desktop'
 import { useDesktopAppStore } from '@/stores/desktopApp'
-import { useDesktopAppFolderModalStore } from '@/stores/desktopAppFolderModal'
 import type { App } from '@/types/desktop'
 
 interface OpenProps {
@@ -19,7 +18,6 @@ const ns = useNamespace('desktop-folder-modal')
 const { appCSSConstant, appSize } = useDesktopGlobal()
 const desktopStore = useDesktopStore()
 const desktopAppStore = useDesktopAppStore()
-const desktopAppFolderModalStore = useDesktopAppFolderModalStore()
 
 const desktopRef = ref()
 const appsRef = ref()
@@ -27,6 +25,7 @@ const bodyRef = ref()
 const visible = ref(false)
 const desktopHeight = ref('auto')
 const apps = ref()
+const isTimerOutside = ref(false)
 
 const currentDesktopIndex = computed(() => desktopStore.currentDesktop.index as number)
 const desktopList = computed(() => desktopAppStore.desktopList)
@@ -34,7 +33,6 @@ const openFolder = computed(() => desktopStore.openFolder)
 const desktop = computed(() => desktopList.value[currentDesktopIndex.value].child)
 const related = computed(() => desktopStore.related)
 const relatedIndex = computed(() => desktopStore.related.index as number)
-const isTimerOutside = ref(false)
 
 watchEffect(() => {
   if (isTimerOutside.value && desktopStore.openFolder.isOpen) {
@@ -77,9 +75,9 @@ const setupSortable = (app: App) => {
 }
 
 const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
-  isTimerOutside.value = useDesktopAppFolderModalTimerOutside(bodyRef).isTimerOutside.value
-  isTimerOutside.value = false
   visible.value = true
+  isTimerOutside.value = false
+  useDesktopAppFolderModalTimerOutside(bodyRef, isTimerOutside)
 
   if (draggedId) {
     setData()
@@ -133,7 +131,6 @@ const gridStyles = ref({
 const handleClose = () => {
   visible.value = false
   desktopStore.openFolder.isOpen = false
-  desktopAppFolderModalStore.isFirstMergeOpen = false
 }
 
 defineExpose({
