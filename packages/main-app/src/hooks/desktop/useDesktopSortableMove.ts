@@ -169,7 +169,7 @@ const setDesktopStoreRelated = (
   if (evt.to.className === APP_CLASS_NAME) {
     setConstantsForApp(constant, index)
   } else {
-    setConstantsForNonApp(constant, index)
+    setConstantsForNonApp(constant, draggedItem)
   }
 
   if (shouldUpdateNewItem(constant, draggedItem, isSameLevelDragged)) {
@@ -186,9 +186,9 @@ const setConstantsForApp = (constant: SortableConstant, index: number) => {
   constant.relatedList = desktop.value
 }
 
-const setConstantsForNonApp = (constant: SortableConstant, index: number) => {
+const setConstantsForNonApp = (constant: SortableConstant, draggedItem: App) => {
   const openFolderIndex = desktop.value.findIndex((item) => item.id === desktopStore.openFolder.id)
-  constant.newItem = desktop.value[openFolderIndex as number]?.child?.value[index] || null
+  constant.newItem = draggedItem || null
   constant.relatedList =
     openFolderIndex > -1 ? desktop.value[openFolderIndex as number]?.child?.value || [] : []
 }
@@ -200,7 +200,6 @@ const shouldUpdateNewItem = (
 ) => {
   return (
     isSameLevelDragged &&
-    !constant.newItem &&
     draggedItem &&
     constant.relatedList?.findIndex((item) => item.id === draggedItem.id) === -1 &&
     (desktopStore.openFolder.isOpen || dragged.value.desktopIndex !== related.value.desktopIndex)

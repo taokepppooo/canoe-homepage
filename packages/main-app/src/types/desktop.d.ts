@@ -51,7 +51,6 @@ export interface SortableConstant {
   moveX: number
   moveY: number
   isDeleteDraggedApp: boolean
-  isModalNotLast: boolean
   timer: NodeJS.Timeout | null
   newItem: App | null
   relatedList: App[]

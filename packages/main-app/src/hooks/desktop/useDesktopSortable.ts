@@ -16,7 +16,6 @@ const constant: SortableConstant = {
   moveX: 0,
   moveY: 0,
   isDeleteDraggedApp: false,
-  isModalNotLast: false,
   timer: null,
   newItem: null,
   relatedList: []
