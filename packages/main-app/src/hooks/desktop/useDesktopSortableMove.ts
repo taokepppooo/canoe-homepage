@@ -7,6 +7,7 @@ import type { SortableEventOption } from '@/types/sortable'
 import type { App, MoveOriginalEvent, SortableConstant } from '@/types/desktop'
 
 const desktopStore = useDesktopStore()
+
 const {
   dragged,
   related,
@@ -177,7 +178,7 @@ const setDesktopStoreRelated = (
   }
 
   if (constant.newItem) {
-    updateDesktopStoreRelated(constant, index)
+    updateDesktopStoreRelated(evt, index)
   }
 }
 
@@ -190,7 +191,7 @@ const setConstantsForNonApp = (constant: SortableConstant, draggedItem: App) => 
   const openFolderIndex = desktop.value.findIndex((item) => item.id === desktopStore.openFolder.id)
   constant.newItem = draggedItem || null
   constant.relatedList =
-    openFolderIndex > -1 ? desktop.value[openFolderIndex as number]?.child?.value || [] : []
+    openFolderIndex > -1 ? desktop.value[openFolderIndex]?.child?.value || [] : []
 }
 
 const shouldUpdateNewItem = (
@@ -224,13 +225,28 @@ const updateNewItem = (constant: SortableConstant, draggedItem: App, evt: Sortab
   constant.isDeleteDraggedApp = true
 }
 
-const updateDesktopStoreRelated = (constant: SortableConstant, index: number) => {
-  desktopStore.related.index = index
-  desktopStore.related.id = constant.newItem?.id
-  desktopStore.related.inFolder = Boolean(constant.newItem?.parentId)
-  if (constant.newItem?.parentId) {
-    desktopStore.related.parentId = constant.newItem?.parentId
+const updateDesktopStoreRelated = (evt: SortableEventOption, index: number) => {
+  const { related, openFolder } = desktopStore
+  let i = index
+  if (evt.willInsertAfter) {
+    i = index - 1
   }
+  const target = !openFolder.id
+    ? desktop.value[i]
+    : desktop.value.find((item) => item.id === openFolder.id)?.child?.value[i]
+
+  if (target) {
+    related.index = index
+    related.id = target.id
+    related.inFolder = Boolean(openFolder.id)
+    if (openFolder.id) {
+      related.parentId = desktop.value.find((item) => item.id === openFolder.id)?.child?.value[
+        i
+      ].parentId
+    }
+  }
+
+  console.log(related, 'related')
 }
 
 const calculateIntersectionArea = (

@@ -39,11 +39,11 @@ const handleDragStatusOne = (
   fromClass: string,
   toClass: string
 ) => {
-  if (constant.isDeleteDraggedApp) {
+  if (isDesktopToFolder(list, openFolderIndex)) {
+    handleListAppToFolder(list, evt, openFolderIndex)
+  } else if (constant.isDeleteDraggedApp) {
     handleDeleteDraggedApp(evt, list, constant, fromClass, toClass)
     constant.isDeleteDraggedApp = false
-  } else if (isDesktopToFolder(list, openFolderIndex)) {
-    handleListAppToFolder(list, evt, openFolderIndex)
   } else if (isDragFromModalToOutside(fromClass, toClass, list)) {
     handleDragFromModalToOutside(list, evt)
   } else if (isDragToDifferentElementDesktop()) {

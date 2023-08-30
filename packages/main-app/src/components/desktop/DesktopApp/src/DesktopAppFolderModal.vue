@@ -81,7 +81,6 @@ const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
 
   if (draggedId) {
     setData()
-    setOpenFolder(related.value.id)
   } else {
     setOpenFolder(openFolderId)
     const openIdex = openFolder.value.index
@@ -96,6 +95,7 @@ const open = ({ draggedId, openFolderId }: OpenProps = {}) => {
 const setData = () => {
   apps.value = desktopList.value[related.value.desktopIndex as number].child[relatedIndex.value]
   createChildFolder(apps.value)
+  setOpenFolder(apps.value.id)
 }
 
 const setOpenFolder = (id = '') => {
